@@ -49,12 +49,11 @@ jobs:
         with:
           persist-credentials: false
 
+      # No `version:` here: package.json's `packageManager` names
+      # pnpm 11.22.0 exactly, and the action refuses to start when both are
+      # given ("Multiple versions of pnpm specified"). Reading the exact pin is
+      # also stricter than the `version: 11` major range it replaces.
       - uses: pnpm/action-setup@v4
-        with:
-          # Pinned to the major the profile ships with; `packageManager` in
-          # package.json would otherwise decide, and a lockfile bump could
-          # silently change the pnpm that builds a release.
-          version: 11
 
       - uses: actions/setup-node@v4
         with:
@@ -97,9 +96,11 @@ jobs:
         with:
           persist-credentials: false
 
+      # No `version:` here: package.json's `packageManager` names
+      # pnpm 11.22.0 exactly, and the action refuses to start when both are
+      # given ("Multiple versions of pnpm specified"). Reading the exact pin is
+      # also stricter than the `version: 11` major range it replaces.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - uses: actions/setup-node@v4
         with:
@@ -186,9 +187,11 @@ jobs:
         with:
           persist-credentials: false
 
+      # No `version:` here: package.json's `packageManager` names
+      # pnpm 11.22.0 exactly, and the action refuses to start when both are
+      # given ("Multiple versions of pnpm specified"). Reading the exact pin is
+      # also stricter than the `version: 11` major range it replaces.
       - uses: pnpm/action-setup@v4
-        with:
-          version: 11
 
       - uses: actions/setup-node@v4
         with:
