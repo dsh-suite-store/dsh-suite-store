@@ -46,6 +46,8 @@ jobs:
         node: [22, 24]
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
         with:
@@ -92,6 +94,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
         with:
@@ -158,22 +162,29 @@ jobs:
           fi
           echo "tarball ok: no data/ directory"
 
+  # PACK — builds and tests, holds no publish credential.
+  #
+  # This job runs the repository's own code (`pnpm install`, `pnpm run check`,
+  # `pnpm pack`). A merged PR can leave state that shapes the NEXT shell in the
+  # same job: append `BASH_ENV=…` to $GITHUB_ENV (sourced before every later
+  # script) or a fake `npm` to $GITHUB_PATH. A publish step in that job would
+  # then run through the attacker's shell. Splitting the jobs is the defence;
+  # cleaning up afterwards is not.
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # `contents: write` is required by the last step: creating a GitHub Release
-    # and uploading the tarball to it are writes. The workflow-level default is
-    # `contents: read`, which the check job needs and nothing more — a release
-    # that inherits it fails at the release step with a 403 AFTER npm publish
-    # has already succeeded, leaving a published version with no release.
+    # Read-only: nothing here publishes or pushes. The publish job below owns
+    # the GitHub Release write.
     permissions:
-      contents: write
+      contents: read
     # The tag is the release decision; the registry is the irreversible step.
     # `npm publish` cannot be undone, so it runs only from a tag, and only after
     # the same `check` this repository gates merges on.
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
         with:
@@ -183,9 +194,11 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-          registry-url: https://registry.npmjs.org
 
-      - run: pnpm install --frozen-lockfile
+      # `--ignore-scripts`: a lifecycle hook in the lockfile, or one a merged PR
+      # adds to the manifest, would run before any check with the checkout on
+      # disk. This repository has no legitimate install hook.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
 
       # The tag must agree with the manifest. Publishing `0.1.0` from a `v1.0.0`
       # tag is the mistake that cannot be taken back.
@@ -201,21 +214,94 @@ jobs:
 
       - run: pnpm run check
 
-      # The tarball has to exist BEFORE the release step names it: `npm publish`
-      # builds one internally but leaves it in npm's own temp directory, so
-      # `files: dsh-suite-store-*.tgz` matched nothing and the attach step
-      # silently uploaded no asset. Packing into the workspace first is what
-      # makes the pattern resolvable — and it is also the artifact whose bytes
-      # were published, which is what a maintainer wants to diff.
-      - name: Pack the tarball that will be attached
+      # The tarball has to exist BEFORE anything names it: `npm publish` builds
+      # one internally but leaves it in npm's own temp directory, so a later
+      # glob matched nothing and the release silently attached no asset. Packing
+      # here also produces the exact bytes that will be published.
+      - name: Pack the tarball
         run: pnpm pack
 
-      # `prepublishOnly` also builds, so this is belt and braces: a release must
-      # never publish whatever happened to be in `lib/` on the runner.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: store-tarball
+          path: dsh-suite-store-*.tgz
+          if-no-files-found: error
+
+  # PUBLISH — holds the credential, runs NO repository code.
+  #
+  # No checkout, no install, no build: the only inputs are the tarball and the
+  # credential. Nothing a merged PR contains can execute here, so nothing can
+  # set BASH_ENV / GITHUB_PATH / a fake `npm` for the step that owns it. The
+  # release job above still runs the repository's own build — which is exactly
+  # why it must not be the job that holds NPM_TOKEN.
+  #
+  # TWO AUTHENTICATION MODES, chosen by whether NPM_TOKEN exists:
+  #
+  #   token (first release)  npm cannot register a trusted publisher for a
+  #                          package that does not exist — the settings page is
+  #                          the package's own — so the FIRST publish needs a
+  #                          Granular Access Token. (Automation tokens no longer
+  #                          exist; npm removed every legacy token type in
+  #                          November 2025.)
+  #
+  #   OIDC (everything after) With a trusted publisher configured on the
+  #                          package, the job asks GitHub for a short-lived OIDC
+  #                          token. Delete `secrets.NPM_TOKEN` and this path
+  #                          takes over automatically.
+  publish:
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # `contents: write` is for the GitHub Release only; `id-token: write` is for
+    # npm trusted publishing. Neither is inherited by sibling jobs.
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: store-tarball
+
+      # npm's OIDC support landed in CLI 11.5.1; the npm bundled with a Node 22
+      # release can be older (v22 ships npm 10.x). Pinning npm is what makes the
+      # OIDC path work instead of failing with an unhelpful 401.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g npm@^11.5.1
+      - run: npm --version
+
+      # Publish the TARBALL, not the directory. A directory would re-read
+      # whatever `package.json` is on disk; the tarball is the manifest `pnpm
+      # pack` produced from the checked-out source.
       - name: Publish
-        run: npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Empty when the secret is not configured, which selects OIDC. `secrets`
+          # cannot be interpolated into `if:`, so the branch lives in the shell.
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          publish_dir="$(mktemp -d)"
+          cp dsh-suite-store-*.tgz "$publish_dir"/
+          printf 'registry=https://registry.npmjs.org/\n' > "$publish_dir/.npmrc"
+          if [ -n "${NPM_TOKEN:-}" ]; then
+            echo "publishing with NPM_TOKEN"
+            printf '//registry.npmjs.org/:_authToken=%s\nalways-auth=true\n' "$NPM_TOKEN" >> "$publish_dir/.npmrc"
+          else
+            echo "no NPM_TOKEN configured; using OIDC trusted publishing"
+          fi
+          cd "$publish_dir"
+          # `npm_config_userconfig` pins the config so a stray HOME .npmrc on the
+          # runner cannot redirect the request.
+          npm_config_userconfig="$publish_dir/.npmrc" \
+            env -u BASH_ENV \
+            npm publish ./dsh-suite-store-*.tgz \
+              --access public \
+              --ignore-scripts \
+              --registry https://registry.npmjs.org/
+          cd - >/dev/null
+          rm -rf "$publish_dir"
 
       # The tarball is attached to the GitHub release so a maintainer can diff
       # what was published without asking the registry.
