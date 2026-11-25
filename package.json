@@ -1,0 +1,86 @@
+{
+  "name": "dsh-suite-store",
+  "version": "1.0.0",
+  "description": "Browse, search, and Install or uninstall full sets of plugins with one click inside DeepSeek Harness · DSH 可视化插件整合包商店：浏览、搜索、一键安装与卸载一整套插件",
+  "icon": "assets/logo.svg",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dsh-suite-store/dsh-suite-store.git"
+  },
+  "homepage": "https://github.com/dsh-suite-store/dsh-suite-store#readme",
+  "bugs": {
+    "url": "https://github.com/dsh-suite-store/dsh-suite-store/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "bundle",
+    "market",
+    "整合包"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.tests.json --noEmit",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.tests.json --noEmit && pnpm run build:client",
+    "build:client": "tsdown && node scripts/check-client-banner.mjs && node scripts/check-theme-tokens.mjs",
+    "test": "vitest run",
+    "check": "pnpm run test && pnpm run build",
+    "prepare": "pnpm run build",
+    "prepublishOnly": "pnpm run build"
+  },
+  "packageManager": "pnpm@11.22.0",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "react": "^18.3.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-theme"
+      ],
+      "platform": "web"
+    }
+  },
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": "./client/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "assets",
+    "locale",
+    "lib",
+    "client",
+    "cordis.patch.yml",
+    "LICENSE"
+  ],
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.31",
+    "lightningcss": "^1.30.0",
+    "react": "^18.3.1",
+    "tsdown": "^0.22.14",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

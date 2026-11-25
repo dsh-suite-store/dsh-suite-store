@@ -1,0 +1,10 @@
+# Bundle patch inserted into a profile's layer stack when this package is
+# installed as a bundle.
+#
+# The `name` is the package name, so the loader resolves the same entry the
+# profile would have written by hand and `plugin_manager` shows one row rather
+# than two. The id is the plugin's own `name` export, which is what
+# `src/index.ts` reports and what the client bundle registers under.
+- insert:
+    - id: dsh-suite-store
+      name: 'dsh-suite-store'

@@ -1,0 +1,83 @@
+{
+  "format": 1,
+  "generatedAt": "2026-11-10T12:00:00Z",
+  "catalogRef": {
+    "updated": "2026-11-08",
+    "count": 9714
+  },
+  "categories": {
+    "personal": {
+      "secondaries": [
+        "workspace",
+        "writing"
+      ]
+    },
+    "research": {
+      "secondaries": [
+        "finance",
+        "academic"
+      ]
+    }
+  },
+  "bundles": [
+    {
+      "id": "fin-analyst-workstation",
+      "owner": "someuser",
+      "version": "1.2.0",
+      "title": {
+        "zh": "金融分析师工作站",
+        "en": "Financial Analyst Workstation"
+      },
+      "summary": {
+        "zh": "从拉数据到出研报，一套装完",
+        "en": "From data pulls to research notes, in one install"
+      },
+      "category": {
+        "primary": "research",
+        "secondary": "finance"
+      },
+      "tags": [
+        "a-share"
+      ],
+      "cover": null,
+      "publishedAt": "2026-10-02T08:11:00Z",
+      "updatedAt": "2026-11-01T09:20:00Z",
+      "memberCount": 2,
+      "capabilitySummary": [
+        "fs-read",
+        "network"
+      ],
+      "needsBuildApproval": false,
+      "members": [
+        {
+          "key": "memory",
+          "id": "npm:@yolk_vat-y/dsh-project-memory",
+          "name": "@yolk_vat-y/dsh-project-memory",
+          "version": "0.6.11",
+          "pinned": true,
+          "spec": "npm:@yolk_vat-y/dsh-project-memory@0.6.11"
+        },
+        {
+          "key": "worklog",
+          "id": "git:0x7A7A6572/dsh-forge-studio#packages/plugin-daily-log",
+          "name": "dsh-forge-studio",
+          "version": null,
+          "pinned": false,
+          "spec": "github:0x7A7A6572/dsh-forge-studio#packages/plugin-daily-log"
+        }
+      ],
+      "detail": "bundles/someuser__fin-analyst-workstation.json",
+      "health": {
+        "status": "ok",
+        "checkedAt": "2026-11-10T00:00:00Z",
+        "missing": [],
+        "deprecated": []
+      },
+      "score": {
+        "hotness": 61.2,
+        "freshnessDays": 8,
+        "coverage": 0.86
+      }
+    }
+  ]
+}

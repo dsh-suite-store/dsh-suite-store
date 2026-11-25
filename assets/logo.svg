@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Bundle Store">
+  <title>Bundle Store</title>
+  <!-- Three stacked panels: the many plugins a suite gathers, held together
+       by one rounded outline. Drawn on currentColor so it follows the theme
+       in both the sidebar and the dark theme. -->
+  <rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="currentColor" stroke-width="4" opacity="0.45"/>
+  <rect x="16" y="18" width="32" height="8" rx="4" fill="currentColor"/>
+  <rect x="16" y="29" width="22" height="8" rx="4" fill="currentColor" opacity="0.72"/>
+  <rect x="16" y="40" width="27" height="8" rx="4" fill="currentColor" opacity="0.45"/>
+</svg>

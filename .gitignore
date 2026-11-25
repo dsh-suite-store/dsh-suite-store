@@ -1,0 +1,47 @@
+# Build output (anchored so src/client/ — the React source — stays tracked)
+/lib/
+/client/
+/node_modules/
+
+# Local tooling
+*.tsbuildinfo
+coverage/
+.vitest/
+
+# Runtime configuration read from process.env (DSH_HOME, DSH_PROFILE_DIR,
+# DSH_SUITES_STORE_DEBUG, DSH_APP_ASAR). A developer's local .env must never be
+# staged; a checked-in example documents the shape instead.
+.env
+.env.*
+!.env.example
+
+# npm pack scratch output. The transport/catalog-service tests need the
+# checked-in tarball fixture, so re-include exactly that one — anchored to the
+# repository root, so the intent cannot silently stop matching.
+*.tgz
+!/tests/fixtures/catalog-index.tgz
+
+# Local debug / live probes
+*.log
+*.out
+.dbg-*
+.live-*
+
+# Ad-hoc one-off probes; the build scripts referenced by package.json stay.
+scripts/tmp-*.mjs
+
+# Commit-message scratch files
+.commit-msg.txt
+
+# Editor and OS noise (this repo is published, so a contributor's local
+# droppings must never reach a release tarball).
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# npm/pnpm scratch. `prepublishOnly` rebuilds, so a stale packed file must
+# never be committed by hand.
+*.orig
+pnpm-debug.log*

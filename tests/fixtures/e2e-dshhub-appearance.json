@@ -1,0 +1,93 @@
+{
+  "format": 1,
+  "id": "dshhub-appearance",
+  "owner": "dsh-suite-store",
+  "version": "1.0.0",
+  "readme": {
+    "zh": "统一主题配色、侧边栏与界面细节，凑齐完整工作区",
+    "en": "Unify themes, sidebar, and UI details"
+  },
+  "capabilities": [
+    {
+      "tag": "env",
+      "sources": [
+        "omdsh-dev/DSH-better-sidebar"
+      ]
+    },
+    {
+      "tag": "fs-read",
+      "sources": [
+        "kingOfSoySauce/dsh-liang-skin",
+        "omdsh-dev/DSH-better-sidebar"
+      ]
+    },
+    {
+      "tag": "fs-write",
+      "sources": [
+        "omdsh-dev/DSH-better-sidebar"
+      ]
+    },
+    {
+      "tag": "host-runtime",
+      "sources": [
+        "omdsh-dev/DSH-better-sidebar"
+      ]
+    },
+    {
+      "tag": "network",
+      "sources": [
+        "omdsh-dev/DSH-better-sidebar"
+      ]
+    },
+    {
+      "tag": "shell",
+      "sources": [
+        "omdsh-dev/DSH-better-sidebar"
+      ]
+    }
+  ],
+  "members": [
+    {
+      "key": "kingOfSoySauce/dsh-liang-skin",
+      "id": "npm:@leon___/dsh-client-liang-intensity-skin",
+      "name": "dsh-liang-skin",
+      "spec": "npm:@leon___/dsh-client-liang-intensity-skin@0.1.21",
+      "version": "0.1.21",
+      "npm": "@leon___/dsh-client-liang-intensity-skin",
+      "repo": "https://github.com/kingOfSoySauce/dsh-liang-skin",
+      "stars": 398,
+      "description": {
+        "zh": "自适应推理等级滑块皮肤，将当前模型可用档位映射到 0–30 视觉强度，并同步人物、背景和界面配色。",
+        "en": "Adaptive reasoning slider skin that maps each model's available reasoning efforts onto a 0–30 visual intensity scale, with synchronized portraits, background, and interface colors."
+      }
+    },
+    {
+      "key": "omdsh-dev/DSH-better-sidebar",
+      "id": "npm:dsh-better-sidebar",
+      "name": "DSH-better-sidebar",
+      "spec": "npm:dsh-better-sidebar@0.32.1",
+      "version": "0.32.1",
+      "npm": "dsh-better-sidebar",
+      "repo": "https://github.com/omdsh-dev/DSH-better-sidebar",
+      "stars": 5213,
+      "description": {
+        "zh": "侧边栏完整工作台：内置文件渲染编辑、终端、Git 与子代理，支持三方插件注册新 Tab。",
+        "en": "Full sidebar workbench with file rendering and editing, terminal, Git, and subagents; third-party plugins can register new tabs."
+      }
+    },
+    {
+      "key": "Physicolor/dsh-ui-harmonizer",
+      "id": "npm:dsh-ui-harmonizer",
+      "name": "dsh-ui-harmonizer",
+      "spec": "npm:dsh-ui-harmonizer@0.9.6",
+      "version": "0.9.6",
+      "npm": "dsh-ui-harmonizer",
+      "repo": "https://github.com/Physicolor/dsh-ui-harmonizer",
+      "stars": 10,
+      "description": {
+        "zh": "DeepSeek Harness UI 协调器：规范化官方未完善、自相矛盾的界面，协调已装插件间的样式冲突并统一视觉语言（全部遵循官方设计令牌）——支持实时自定义对话宽度、markdown 字号、工作区缩放、UI 字体栈，并在设置页提供圆角中栏卡片；纯客户端 dsh bundle，零模型开销，无 host 端，可无残留移除。",
+        "en": "UI harmonizer for DeepSeek Harness: normalizes unfinished or self-contradictory official UI, reconciles style conflicts between installed plugins, and unifies the visual language via official design tokens — with live-customizable chat width, markdown font size, workspace scale, UI font stack and a rounded center-column card from Settings → General; client-only dsh bundle, zero model cost, no host side, removable without residue."
+      }
+    }
+  ]
+}

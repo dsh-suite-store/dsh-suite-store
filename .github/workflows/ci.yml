@@ -1,0 +1,229 @@
+name: ci
+
+# Two jobs, one rule each:
+#
+#   check    — a pull request must not merge with a red build. It runs exactly
+#              what `pnpm run check` runs locally, so "green here" and "green on
+#              my machine" are the same claim.
+#   release  — a pushed `v*` tag publishes to npm. Tagging is the deliberate act
+#              that ships; merging is not.
+#
+# The split matters: this package is installed by users, so an accidental merge
+# must not reach the registry. A tag is a decision someone made on purpose.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags:
+      # A release tag is `v1.0.0`, `v0.2.0-rc.1`, and nothing else. Anchoring it
+      # means a stray `v-next` or `version-2` tag does not publish.
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+# Cancel a superseded PR check. Never cancel a release: the window between
+# `npm publish` and the artifact upload is not a window to interrupt.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # The suite is seconds today; the budget exists so a hung `pnpm install`
+    # cannot hold a runner for the default six hours.
+    timeout-minutes: 20
+    strategy:
+      # Never mask a failure on one Node version with a pass on the other: this
+      # package spawns child processes and reads `import.meta.url`, both of which
+      # have moved between LTS lines.
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          # Pinned to the major the profile ships with; `packageManager` in
+          # package.json would otherwise decide, and a lockfile bump could
+          # silently change the pnpm that builds a release.
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      # `--frozen-lockfile` is the point: a lockfile that disagrees with the
+      # manifest must fail here, not resolve something different on a runner
+      # and publish it.
+      - run: pnpm install --frozen-lockfile
+
+      # One command, and it is the same one a contributor runs. It covers
+      # typecheck (all three tsconfig projects), the unit suite, the builds, and
+      # the two artifact guards (`check-client-banner`, `check-theme-tokens`).
+      - name: Typecheck, test, build
+        run: pnpm run check
+
+      # A failure here is usually a broken lockfile rather than a broken build,
+      # so it is named separately. `pnpm run check` already builds; this proves
+      # the tarball a user would get actually contains the entry points.
+      - name: The published tarball contains its entry points
+        run: |
+          pnpm pack --pack-destination /tmp
+          tarball=$(ls /tmp/dsh-suite-store-*.tgz)
+          tar -tzf "$tarball" | grep -qx 'package/lib/index.js'         || { echo "::error::tarball is missing lib/index.js"; exit 1; }
+          tar -tzf "$tarball" | grep -qx 'package/lib/types/index.d.ts' || { echo "::error::tarball is missing lib/types/index.d.ts"; exit 1; }
+          tar -tzf "$tarball" | grep -qx 'package/client/client.js'     || { echo "::error::tarball is missing client/client.js"; exit 1; }
+          tar -tzf "$tarball" | grep -qx 'package/cordis.patch.yml'     || { echo "::error::tarball is missing cordis.patch.yml"; exit 1; }
+          echo "tarball ok: $(basename "$tarball")"
+
+  # The repository's own checks passed; this job asserts the SUBMITTED catalog
+  # is still readable by the parser that ships in this tarball. A schema change
+  # that only breaks at install time is the one failure a user would meet first.
+  catalog-compat:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run build
+
+      # The fixture is one real generation of the catalog repository's output.
+      # It carries a single card, so it proves the SHAPE parses; the richer
+      # check is the live catalog below, which is what users actually receive.
+      - name: The catalog fixture parses
+        run: |
+          node --input-type=module -e "
+            import { readFileSync } from 'node:fs'
+            import { parseCatalogIndex } from './lib/catalog/types.js'
+            const index = JSON.parse(readFileSync('tests/fixtures/catalog-index.json', 'utf8'))
+            const parsed = parseCatalogIndex(index)
+            if (parsed.bundles.length === 0) throw new Error('fixture parsed to zero cards')
+            console.log('parsed', parsed.bundles.length, 'card(s) from the fixture')
+          "
+
+      # The published catalog is the document every user downloads. A parser
+      # change that rejects it breaks every install while every unit test stays
+      # green, because the fixtures are ours and the catalog is not. A fetch
+      # failure is a WARNING (the network is not this PR's fault); a parse
+      # failure is an ERROR, because that is the defect this job exists for.
+      - name: The published catalog parses
+        run: |
+          node --input-type=module -e "
+            import { parseCatalogIndex } from './lib/catalog/types.js'
+            const url = 'https://cdn.jsdelivr.net/npm/dsh-suite-store-catalog@latest/index.json'
+            let document
+            try {
+              const response = await fetch(url, { signal: AbortSignal.timeout(20_000) })
+              if (!response.ok) throw new Error('HTTP ' + response.status)
+              document = await response.json()
+            } catch (error) {
+              console.log('::warning::could not fetch the published catalog (' + error.message + '); live check skipped')
+              process.exit(0)
+            }
+            const parsed = parseCatalogIndex(document)
+            if (parsed.bundles.length === 0) throw new Error('the published catalog parsed to zero cards')
+            console.log('parsed', parsed.bundles.length, 'cards from the published catalog')
+          "
+
+      # The tarball is what a user installs, so the assertion that matters is
+      # that the data documents did NOT ride along: they are unused at runtime
+      # and adding ~80 kB to every download for nothing.
+      - name: The tarball carries no preview data
+        run: |
+          pnpm pack --pack-destination /tmp
+          tarball=$(ls /tmp/dsh-suite-store-*.tgz)
+          if tar -tzf "$tarball" | grep -q '^package/data/'; then
+            echo "::error::the tarball contains data/, which no runtime code reads"
+            tar -tzf "$tarball" | grep '^package/data/' | head -20
+            exit 1
+          fi
+          echo "tarball ok: no data/ directory"
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # `contents: write` is required by the last step: creating a GitHub Release
+    # and uploading the tarball to it are writes. The workflow-level default is
+    # `contents: read`, which the check job needs and nothing more — a release
+    # that inherits it fails at the release step with a 403 AFTER npm publish
+    # has already succeeded, leaving a published version with no release.
+    permissions:
+      contents: write
+    # The tag is the release decision; the registry is the irreversible step.
+    # `npm publish` cannot be undone, so it runs only from a tag, and only after
+    # the same `check` this repository gates merges on.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      # The tag must agree with the manifest. Publishing `0.1.0` from a `v1.0.0`
+      # tag is the mistake that cannot be taken back.
+      - name: The tag matches package.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version=$(node -p "require('./package.json').version")
+          if [ "$tag" != "$version" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+          echo "releasing $version"
+
+      - run: pnpm run check
+
+      # The tarball has to exist BEFORE the release step names it: `npm publish`
+      # builds one internally but leaves it in npm's own temp directory, so
+      # `files: dsh-suite-store-*.tgz` matched nothing and the attach step
+      # silently uploaded no asset. Packing into the workspace first is what
+      # makes the pattern resolvable — and it is also the artifact whose bytes
+      # were published, which is what a maintainer wants to diff.
+      - name: Pack the tarball that will be attached
+        run: pnpm pack
+
+      # `prepublishOnly` also builds, so this is belt and braces: a release must
+      # never publish whatever happened to be in `lib/` on the runner.
+      - name: Publish
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # The tarball is attached to the GitHub release so a maintainer can diff
+      # what was published without asking the registry.
+      - name: Attach the tarball to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dsh-suite-store-*.tgz
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

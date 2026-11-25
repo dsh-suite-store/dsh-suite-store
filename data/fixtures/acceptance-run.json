@@ -1,0 +1,151 @@
+{
+  "format": 1,
+  "id": "acceptance-run",
+  "owner": "vision",
+  "version": "0.1.0",
+  "readme": {
+    "zh": "这是用于端到端验收的最小整合包。三个成员都与 dsh 0.2.1-rc.3 兼容，因此整套安装应当一次成功。",
+    "en": "A minimal acceptance bundle. All three members are compatible with dsh 0.2.1-rc.3, so the whole set installs in one run."
+  },
+  "capabilities": [
+    {
+      "tag": "credentials",
+      "sources": [
+        "billion-context",
+        "cc-safety-net",
+        "dsh-cost-meter"
+      ]
+    },
+    {
+      "tag": "dynamic-code",
+      "sources": [
+        "billion-context"
+      ]
+    },
+    {
+      "tag": "env",
+      "sources": [
+        "billion-context",
+        "cc-safety-net",
+        "dsh-cost-meter"
+      ]
+    },
+    {
+      "tag": "fs-read",
+      "sources": [
+        "billion-context",
+        "cc-safety-net",
+        "dsh-cost-meter"
+      ]
+    },
+    {
+      "tag": "fs-write",
+      "sources": [
+        "billion-context",
+        "cc-safety-net",
+        "dsh-cost-meter"
+      ]
+    },
+    {
+      "tag": "llm",
+      "sources": [
+        "billion-context",
+        "dsh-cost-meter"
+      ]
+    },
+    {
+      "tag": "network",
+      "sources": [
+        "billion-context",
+        "cc-safety-net",
+        "dsh-cost-meter"
+      ]
+    },
+    {
+      "tag": "shell",
+      "sources": [
+        "billion-context",
+        "cc-safety-net",
+        "dsh-cost-meter"
+      ]
+    },
+    {
+      "tag": "subagent",
+      "sources": [
+        "billion-context",
+        "dsh-cost-meter"
+      ]
+    }
+  ],
+  "members": [
+    {
+      "key": "context",
+      "name": "billion-context",
+      "id": "npm:billion-context",
+      "version": "0.1.213",
+      "pinned": true,
+      "spec": "npm:billion-context@0.1.213",
+      "reason": {
+        "zh": "验收成员。",
+        "en": "Acceptance member."
+      },
+      "description": {
+        "en": "A context-compression plugin — small context windows (a 100K context is enough), 5x fewer tokens, month-long single sessions (billions of tokens), and compression quality — for all agents: pi, OpenCode, Codex, Claude Code, and more. billion-context is all",
+        "zh": ""
+      },
+      "repo": "https://github.com/ranxianglei/billion-context",
+      "npm": "https://www.npmjs.com/package/billion-context",
+      "stars": 7216
+    },
+    {
+      "key": "cost",
+      "name": "dsh-cost-meter",
+      "id": "npm:dsh-cost-meter",
+      "version": "1.9.62",
+      "pinned": true,
+      "spec": "npm:dsh-cost-meter@1.9.62",
+      "reason": {
+        "zh": "验收成员。",
+        "en": "Acceptance member."
+      },
+      "description": {
+        "en": "DeepSeek Harness 会话费用统计插件:本会话成本、当日费用、历史记录与官方价格同步,支持多厂商多模型价格计费(内置 170+ 模型 ID 价格目录与自动匹配)、主流 Coding Plan 订阅额度查询与显示(16 家,含 WorkBuddy 官方积分、OpenDesign 工作区查询、含小米 MiMo Token Plan 控制台 Cookie 查询、SCNet Token Plan 本地 Credits 计量与火山方舟 Volcano Ark Coding Plan AK/SK 签名查询",
+        "zh": ""
+      },
+      "repo": "https://github.com/Han-1413141/dsh-cost-meter",
+      "npm": "https://www.npmjs.com/package/dsh-cost-meter",
+      "stars": 684
+    },
+    {
+      "key": "safety",
+      "name": "cc-safety-net",
+      "id": "npm:cc-safety-net",
+      "version": "2.7.8",
+      "pinned": true,
+      "spec": "npm:cc-safety-net@2.7.8",
+      "reason": {
+        "zh": "验收成员。",
+        "en": "Acceptance member."
+      },
+      "description": {
+        "en": "A coding agent CLI hook - block destructive commands and secret file access",
+        "zh": ""
+      },
+      "repo": "https://github.com/kenryu42/cc-safety-net",
+      "npm": "https://www.npmjs.com/package/cc-safety-net",
+      "stars": 2016
+    }
+  ],
+  "testedWith": "dsh 0.2.1-rc.3",
+  "capabilityRedLines": [
+    {
+      "text": {
+        "zh": "其中一个成员会改写宿主的压缩配置：关闭默认的 compaction-basic，替换 preset-standard / ptc / minimal / cordis 的注入列表，并注册一个常驻的压缩门控来接管会话压缩。",
+        "en": "One member rewrites the host compaction setup: it turns off the default compaction-basic, replaces the inject lists of preset-standard / ptc / minimal / cordis, and registers an always-on gate that takes over session compaction."
+      },
+      "members": [
+        "billion-context"
+      ]
+    }
+  ]
+}

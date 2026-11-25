@@ -1,0 +1,50 @@
+{
+  "format": 1,
+  "id": "fin-analyst-workstation",
+  "owner": "someuser",
+  "version": "1.2.0",
+  "readme": {
+    "zh": "为财务分析场景准备的整合包：先装项目记忆，再挂上每日汇报。",
+    "en": "A bundle for financial analysis: project memory first, then a daily worklog."
+  },
+  "capabilities": [
+    {
+      "tag": "shell",
+      "sources": ["@yolk_vat-y/dsh-project-memory"]
+    },
+    {
+      "tag": "network",
+      "sources": ["@yolk_vat-y/dsh-project-memory"]
+    }
+  ],
+  "postInstall": {
+    "zh": "",
+    "en": "Restart the harness once so both plugins pick up the new profile."
+  },
+  "members": [
+    {
+      "key": "memory",
+      "id": "npm:@yolk_vat-y/dsh-project-memory",
+      "name": "@yolk_vat-y/dsh-project-memory",
+      "version": "0.6.11",
+      "pinned": true,
+      "spec": "npm:@yolk_vat-y/dsh-project-memory@0.6.11",
+      "reason": {
+        "zh": "让分析过程留在项目里。",
+        "en": "Keeps the analysis trail inside the project."
+      }
+    },
+    {
+      "key": "daily-log",
+      "id": "git:0x7A7A6572/dsh-forge-studio#packages/plugin-daily-log",
+      "name": "0x7A7A6572/dsh-forge-studio",
+      "version": null,
+      "pinned": false,
+      "spec": "git:0x7A7A6572/dsh-forge-studio#packages/plugin-daily-log",
+      "reason": {
+        "zh": "每天自动汇总一次结论。",
+        "en": "Summarises the day's conclusions automatically."
+      }
+    }
+  ]
+}
