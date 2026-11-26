@@ -2679,7 +2679,11 @@
   line-height: 16px;
 }
 
-.memberPickerMeta .fieldHint {
+.memberPickerHint {
+  color: var(--dsw-alias-label-secondary, #5c6570);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
   text-align: right;
 }
 

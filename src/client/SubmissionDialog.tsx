@@ -424,7 +424,7 @@ export function SubmissionDialog(props: SubmissionDialogProps): ReactNode {
                     ? fill('submitResultCount', locale, { count: candidates.length })
                     : copy(queryActive ? 'submitSearchTab' : 'submitInstalledTab', locale)}
                 </span>
-                <span className={css.fieldHint}>{copy('submitSearchHint', locale)}</span>
+                <span className={css.memberPickerHint}>{copy('submitSearchHint', locale)}</span>
               </div>
 
               <div className={css.memberResults}>
