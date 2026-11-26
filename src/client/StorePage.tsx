@@ -340,7 +340,10 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
                 setSubmissionOpen(true)
               }}
             >
-              {copy('submitSuite', locale)}
+              <svg className={css.submissionLinkIcon} width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+                <path d="M4 1.75h4.5L12 5.25v2.5M8.5 1.75v3.5H12M4 1.75v12.5h4.25M11.5 8.5v5M9 11h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>{copy('submitSuite', locale)}</span>
             </a>
             <Button
               tone="secondary"

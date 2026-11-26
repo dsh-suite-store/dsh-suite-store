@@ -2369,12 +2369,21 @@
    reads as a quiet utility next to the title. The underline appears on hover
    and keyboard focus, matching the catalog links inside the sheet. */
 .submissionLink {
-  color: var(--dsw-alias-link, #4f6ef7);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--dsw-alias-label-primary, #1f2328);
   font-size: 12px;
   line-height: 28px;
   text-decoration: none;
   white-space: nowrap;
   padding: 0 2px;
+}
+
+.submissionLinkIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .submissionLink:hover,
@@ -2723,6 +2732,14 @@
   gap: 3px;
 }
 
+.memberTitleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
 .memberTitle {
   overflow: hidden;
   color: var(--dsw-alias-label-primary, #1f2328);
@@ -2731,6 +2748,15 @@
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.memberCoordinateTag {
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-all;
+  font-family: var(--dsw-font-markdown-code-font-family, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 10px;
+  line-height: 14px;
 }
 
 .memberCoordinate {
