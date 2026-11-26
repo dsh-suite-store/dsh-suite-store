@@ -33,6 +33,8 @@ describe('store routes', () => {
       // something a maintainer can act on.
       '/dsh-suite-store/api/logs',
       '/dsh-suite-store/api/capabilities',
+      '/dsh-suite-store/api/submission/installed',
+      '/dsh-suite-store/api/submission/search',
       // The client half's self-report: a desktop host has no console, so this
       // is how "did apply() run" becomes answerable from outside.
       '/dsh-suite-store/api/client-report',
@@ -84,6 +86,35 @@ describe('store routes', () => {
     expect((await call('GET', '/api/detail')).status()).toBe(400)
   })
 
+  it('serves curated members already installed in this profile', async () => {
+    const ex = await call('GET', '/api/submission/installed')
+    expect(ex.status()).toBe(200)
+    expect(JSON.parse(ex.body()).members[0]).toMatchObject({ key: 'alice/alpha' })
+  })
+
+  it('searches the curated index through the server', async () => {
+    const ex = await call('GET', '/api/submission/search?q=alpha')
+    expect(ex.status()).toBe(200)
+    expect(JSON.parse(ex.body()).members.map((member: { key: string }) => member.key)).toEqual(['alice/alpha'])
+  })
+
+  it('returns no curated members for an empty search', async () => {
+    const ex = await call('GET', '/api/submission/search')
+    expect(ex.status()).toBe(200)
+    expect(JSON.parse(ex.body()).members).toEqual([])
+  })
+
+  it('reports a curated index failure as an unavailable upstream', async () => {
+    const ex = await call('GET', '/api/submission/search?q=alpha', {
+      api: fakeApi({
+        async submissionSearch() {
+          throw new Error('index offline')
+        },
+      }),
+    })
+    expect(ex.status()).toBe(503)
+    expect(JSON.parse(ex.body()).error).toMatch(/index offline/u)
+  })
   it('refuses a method the route does not serve', async () => {
     const ex = await call('POST', '/api/bundles', { body: {} })
     expect(ex.status()).toBe(405)

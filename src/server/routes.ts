@@ -37,6 +37,7 @@ import type { InstallPlan } from '../install/plan.ts'
 import type { PreflightSummary } from '../store.ts'
 import type { OperationRecord } from '../install/operation.ts'
 import type { UninstallChoice } from '../install/uninstall.ts'
+import type { CuratedMember } from '../submission/curated.ts'
 
 /**
  * The plan a confirmed install runs, as the preflight sheet hands it back.
@@ -174,6 +175,10 @@ export interface StoreApi {
   resume(opId: string, approvedBuilds?: readonly string[]): Promise<OperationRecord>
   /** Follow progress events. */
   subscribe(listener: (event: ProgressEvent) => void): () => void
+  /** Curated members already present in this profile, matched to owner/name. */
+  submissionInstalled(): Promise<CuratedMember[]>
+  /** Search the curated index; results are already limited for the picker. */
+  submissionSearch(query: string): Promise<CuratedMember[]>
   /** Which host this is, for the capability-dependent copy. */
   capabilities(): { canRestart: boolean; hostKind: 'cli' | 'desktop' }
 }
@@ -429,6 +434,32 @@ export function storeRoutes(api: StoreApi, environmentInfo?: RouteEnvironment): 
           // that never reports is the signal that `apply()` did not run.
           ...(clientReport === undefined ? {} : { clientReport }),
         })
+      },
+    },
+    {
+      kind: 'exact',
+      path: `${ROUTE_PREFIX}/api/submission/installed`,
+      handler: async (request, response) => {
+        if (request.method !== 'GET') return methodNotAllowed(response, ['GET'])
+        try {
+          sendJson(response, 200, { members: await api.submissionInstalled() })
+        } catch (error) {
+          sendError(response, 503, messageOf(error))
+        }
+      },
+    },
+    {
+      kind: 'exact',
+      path: `${ROUTE_PREFIX}/api/submission/search`,
+      handler: async (request, response) => {
+        if (request.method !== 'GET') return methodNotAllowed(response, ['GET'])
+        const query = new URL(request.url ?? '/', 'http://localhost').searchParams.get('q')?.trim() ?? ''
+        if (query === '') return sendJson(response, 200, { members: [] })
+        try {
+          sendJson(response, 200, { members: await api.submissionSearch(query) })
+        } catch (error) {
+          sendError(response, 503, messageOf(error))
+        }
       },
     },
     {

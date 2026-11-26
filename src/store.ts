@@ -57,6 +57,7 @@ import type { InstallStore } from './install/store.ts'
 import { planUninstall, type UninstallChoice } from './install/uninstall.ts'
 import { BusyError } from './server/routes.ts'
 import type { MemberStateView, UninstallReport } from './server/routes.ts'
+import type { CuratedIndex, CuratedMember } from './submission/curated.ts'
 
 /**
  * Everything the service needs, injected rather than imported.
@@ -79,6 +80,8 @@ export interface StoreServiceOptions {
   now?: () => Date
   /** Per-member install budget in ms, forwarded to the executor (§7.5). */
   memberTimeoutMs?: number
+  /** Curated plugin lookup used by the submission dialog. */
+  curated?: CuratedIndex
   /** Fan-out point for install events; the SSE route subscribes here. */
   emit?: (event: ServiceEvent) => void
 }
@@ -142,6 +145,7 @@ export class StoreService {
   private readonly host: HostAdapter | undefined
   private readonly store: InstallStore
   private readonly hostKind: 'cli' | 'desktop'
+  private readonly curated: CuratedIndex | undefined
   private readonly now: () => Date
   private readonly listeners = new Set<(event: ServiceEvent) => void>()
   private readonly executor: InstallExecutor | undefined
@@ -177,6 +181,7 @@ export class StoreService {
     this.host = options.host
     this.store = options.store
     this.hostKind = options.hostKind
+    this.curated = options.curated
     this.now = options.now ?? (() => new Date())
     this.memberTimeoutMs = options.memberTimeoutMs ?? DEFAULT_MEMBER_TIMEOUT_MS
     if (options.emit !== undefined) this.listeners.add(options.emit)
@@ -199,6 +204,20 @@ export class StoreService {
         emit: (event) => this.publish(event),
       })
     }
+  }
+
+  // ------------------------------------------------------------- submission
+
+  /** Installed plugins that also exist in the curated index. */
+  async submissionInstalled(): Promise<CuratedMember[]> {
+    if (this.curated === undefined || this.host === undefined) return []
+    return this.curated.matchInstalled(await this.installed())
+  }
+
+  /** Search the curated index for the submission picker. */
+  async submissionSearch(query: string): Promise<CuratedMember[]> {
+    if (this.curated === undefined) throw new Error('curated plugin index is unavailable')
+    return this.curated.search(query, 20)
   }
 
   // ---------------------------------------------------------------- catalog

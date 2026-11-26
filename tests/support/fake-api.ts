@@ -155,7 +155,28 @@ export function fakeApi(overrides: Partial<StoreApi> = {}): StoreApi {
         members: [],
       }
     },
-    async cancel() {
+    async submissionInstalled() {
+      return [{
+        key: 'alice/alpha',
+        owner: 'alice',
+        name: 'alpha',
+        npm: '@alice/alpha',
+        version: '2.0.0',
+        url: 'https://github.com/alice/alpha',
+      }]
+    },
+    async submissionSearch(query) {
+      return query === 'alpha'
+        ? [{
+            key: 'alice/alpha',
+            owner: 'alice',
+            name: 'alpha',
+            npm: '@alice/alpha',
+            version: '2.0.0',
+            url: 'https://github.com/alice/alpha',
+          }]
+        : []
+    },    async cancel() {
       return true
     },
     subscribe() {

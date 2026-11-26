@@ -48,6 +48,7 @@ import { STATE_DIRECTORY, createFileInstallStore } from './install/store.ts'
 import { configurePersistentLog, logEvent } from './log/log.ts'
 import { storeRoutes, ROUTE_PREFIX, type StoreApi } from './server/routes.ts'
 import { StoreService } from './store.ts'
+import { CuratedIndex } from './submission/curated.ts'
 
 /** The plugin's configuration, as written in `cordis.patch.yml`. */
 export interface Config {
@@ -164,6 +165,8 @@ export function bindApi(service: StoreService): StoreApi {
     cancel: () => service.cancel(),
     resume: (opId, approvedBuilds) => service.resume(opId, approvedBuilds),
     subscribe: (listener) => service.subscribe(listener),
+    submissionInstalled: () => service.submissionInstalled(),
+    submissionSearch: (query) => service.submissionSearch(query),
     capabilities: () => service.capabilities(),
   }
 }
@@ -211,6 +214,7 @@ export function apply(ctx: Context, config: Config = {}): void {
     ...(config.maxBundleMembers === undefined ? {} : { maxMembers: config.maxBundleMembers }),
   })
   const details = new DetailLoader({ transport })
+  const curated = new CuratedIndex({ transport })
   const host = connectHost(ctx, profileRootDirectory)
   const debug = config.debug === true || process.env['DSH_SUITES_STORE_DEBUG'] === '1'
   if (debug) host?.setDebug(true)
@@ -228,6 +232,7 @@ export function apply(ctx: Context, config: Config = {}): void {
     details,
     host,
     store,
+    curated,
     hostKind: detectHostKind(),
     ...(config.memberTimeoutMs === undefined ? {} : { memberTimeoutMs: config.memberTimeoutMs }),
   })
