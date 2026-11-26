@@ -2751,7 +2751,15 @@
 }
 
 .memberCoordinateTag {
+  display: inline-flex;
+  align-items: center;
   max-width: 100%;
+  box-sizing: border-box;
+  padding: 2px 7px;
+  border: 1px solid var(--dsw-alias-border-l2, #dde1e8);
+  border-radius: 999px;
+  background: var(--dsw-alias-bg-layer-1, #ffffff);
+  color: var(--dsw-alias-label-secondary, #5c6570);
   white-space: normal;
   word-break: break-all;
   font-family: var(--dsw-font-markdown-code-font-family, ui-monospace, SFMono-Regular, Menlo, monospace);

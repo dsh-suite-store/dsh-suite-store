@@ -25,7 +25,7 @@ import { primaryLabel } from './Card.tsx'
 import { memberDescription, memberDisplayName, memberSource } from './submission-members.ts'
 import { fill, t as copy, type CopyKey, type Locale } from './copy.ts'
 import { wrapTab } from './modal-focus.ts'
-import { Button, Input, Tag } from './ui.tsx'
+import { Button, Input } from './ui.tsx'
 import css from './Store.module.css'
 
 const CONTRIBUTING_URL = 'https://github.com/dsh-suite-store/dsh-suite-store-catalog/blob/main/CONTRIBUTING.md'
@@ -92,7 +92,7 @@ function MemberRow(props: {
       <span className={css.memberResultText}>
         <span className={css.memberTitleRow}>
           <span className={css.memberTitle}>{memberDisplayName(member)}</span>
-          <Tag tone="outline" className={css.memberCoordinateTag}>{member.key}</Tag>
+          <span className={css.memberCoordinateTag}>{member.key}</span>
         </span>
         <span className={css.memberMeta}>{description === '' ? copy('submitNoDescription', locale) : description}</span>
       </span>
