@@ -22,6 +22,7 @@ import {
   type SubmissionDraft,
 } from '../submission/model.ts'
 import { primaryLabel } from './Card.tsx'
+import { memberDescription, memberDisplayName, memberSource } from './submission-members.ts'
 import { fill, t as copy, type CopyKey, type Locale } from './copy.ts'
 import { wrapTab } from './modal-focus.ts'
 import { Button, Input } from './ui.tsx'
@@ -69,34 +70,34 @@ function downloadText(filename: string, text: string): void {
   URL.revokeObjectURL(href)
 }
 
-function memberBlurb(member: CuratedMember, locale: Locale): string {
-  const description = member.description
-  if (description !== undefined) {
-    const preferred = description[locale]
-    if (preferred.trim() !== '') return preferred
-    if (description.en.trim() !== '') return description.en
-  }
-  return member.npm === null ? member.url : `${member.npm}${member.version === null ? '' : `@${member.version}`}`
-}
-
 function MemberRow(props: {
   member: CuratedMember
   locale: Locale
   selected: boolean
   disabled: boolean
-  onAdd: () => void
+  installed: boolean
+  onToggle: () => void
 }): ReactNode {
-  const { member, locale, selected, disabled, onAdd } = props
+  const { member, locale, selected, disabled, installed, onToggle } = props
+  const description = memberDescription(member, locale)
   return (
-    <div className={[css.memberResult, selected ? css.memberResultSelected : ''].filter(Boolean).join(' ')}>
-      <div className={css.memberResultText}>
-        <code className={css.memberKey}>{member.key}</code>
-        <span className={css.memberMeta}>{memberBlurb(member, locale)}</span>
-      </div>
-      <Button tone="ghost" disabled={selected || disabled} onClick={onAdd} className={css.memberAddButton}>
-        {selected ? copy('submitAdded', locale) : copy('submitAdd', locale)}
-      </Button>
-    </div>
+    <button
+      type="button"
+      className={[css.memberResult, selected ? css.memberResultSelected : ''].filter(Boolean).join(' ')}
+      aria-pressed={selected}
+      disabled={disabled}
+      onClick={onToggle}
+    >
+      <span className={css.memberCheck} aria-hidden>{selected ? '✓' : ''}</span>
+      <span className={css.memberResultText}>
+        <span className={css.memberTitle}>{memberDisplayName(member)}</span>
+        <span className={css.memberMeta}>{description === '' ? copy('submitNoDescription', locale) : description}</span>
+        <code className={css.memberCoordinate}>{member.key}</code>
+      </span>
+      <span className={[css.memberSource, installed ? css.memberSourceInstalled : ''].filter(Boolean).join(' ')}>
+        {copy(installed ? 'submitInstalledBadge' : 'submitCuratedBadge', locale)}
+      </span>
+    </button>
   )
 }
 
@@ -120,7 +121,6 @@ export function SubmissionDialog(props: SubmissionDialogProps): ReactNode {
     members: [],
   })
   const [selected, setSelected] = useState<CuratedMember[]>([])
-  const [mode, setMode] = useState<'installed' | 'search'>('installed')
   const [installed, setInstalled] = useState<CuratedMember[] | undefined>(undefined)
   const [installedError, setInstalledError] = useState<string | undefined>(undefined)
   const [query, setQuery] = useState('')
@@ -131,6 +131,8 @@ export function SubmissionDialog(props: SubmissionDialogProps): ReactNode {
   const sheetRef = useRef<HTMLDivElement>(null)
 
   const selectedKeys = useMemo(() => new Set(selected.map((member) => member.key)), [selected])
+  const installedKeys = useMemo(() => new Set((installed ?? []).map((member) => member.key)), [installed])
+  const queryActive = query.trim() !== ''
   const fullDraft = useMemo<SubmissionDraft>(
     () => ({ ...draft, members: selected.map((member) => member.key) }),
     [draft, selected],
@@ -147,7 +149,6 @@ export function SubmissionDialog(props: SubmissionDialogProps): ReactNode {
   }, [loadInstalled])
 
   useEffect(() => {
-    if (mode !== 'search') return undefined
     const term = query.trim()
     if (term === '') {
       setResults([])
@@ -176,7 +177,7 @@ export function SubmissionDialog(props: SubmissionDialogProps): ReactNode {
       live = false
       clearTimeout(timer)
     }
-  }, [mode, query, search])
+  }, [query, search])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
@@ -239,8 +240,12 @@ export function SubmissionDialog(props: SubmissionDialogProps): ReactNode {
     }))
   }
 
-  const addMember = (member: CuratedMember): void => {
-    if (selectedKeys.has(member.key) || selected.length >= SUBMISSION_MAX_MEMBERS) return
+  const toggleMember = (member: CuratedMember): void => {
+    if (selectedKeys.has(member.key)) {
+      setSelected((current) => current.filter((item) => item.key !== member.key))
+      return
+    }
+    if (selected.length >= SUBMISSION_MAX_MEMBERS) return
     setSelected((current) => [...current, member])
   }
 
@@ -269,9 +274,9 @@ export function SubmissionDialog(props: SubmissionDialogProps): ReactNode {
     downloadText(submissionFilename(fullDraft), submissionYaml(fullDraft))
   }
 
-  const candidates = mode === 'installed' ? installed : results
-  const loading = mode === 'installed' ? installed === undefined && installedError === undefined : searching
-  const candidateError = mode === 'installed' ? installedError : searchError
+  const candidates = queryActive ? results : installed ?? []
+  const loading = queryActive ? searching : installed === undefined && installedError === undefined
+  const candidateError = queryActive ? searchError : installedError
 
   return (
     <div
@@ -403,22 +408,7 @@ export function SubmissionDialog(props: SubmissionDialogProps): ReactNode {
             </div>
             {renderErrors('members')}
 
-            <div className={css.modeTabs} role="tablist" aria-label={copy('submitMembers', locale)}>
-              {(['installed', 'search'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  role="tab"
-                  aria-selected={mode === tab}
-                  className={[css.modeTab, mode === tab ? css.modeTabOn : ''].filter(Boolean).join(' ')}
-                  onClick={() => setMode(tab)}
-                >
-                  {copy(tab === 'installed' ? 'submitInstalledTab' : 'submitSearchTab', locale)}
-                </button>
-              ))}
-            </div>
-
-            {mode === 'search' ? (
+            <div className={css.memberPicker}>
               <Input
                 value={query}
                 onChange={setQuery}
@@ -426,29 +416,36 @@ export function SubmissionDialog(props: SubmissionDialogProps): ReactNode {
                 placeholder={copy('submitSearchPlaceholder', locale)}
                 className={css.memberSearch}
               />
-            ) : null}
+              <div className={css.memberPickerMeta} aria-live="polite">
+                <span>
+                  {queryActive && !loading
+                    ? fill('submitResultCount', locale, { count: candidates.length })
+                    : copy(queryActive ? 'submitSearchTab' : 'submitInstalledTab', locale)}
+                </span>
+                <span className={css.fieldHint}>{copy('submitSearchHint', locale)}</span>
+              </div>
 
-            <div className={css.memberResults}>
-              {loading ? (
-                <p className={css.fieldHint}>{copy(mode === 'installed' ? 'submitInstalledLoading' : 'submitSearchLoading', locale)}</p>
-              ) : candidateError !== undefined ? (
-                <p className={css.fieldError} role="alert">
-                  {fill(mode === 'installed' ? 'submitInstalledError' : 'submitSearchError', locale, { reason: candidateError })}
-                </p>
-              ) : mode === 'search' && query.trim() === '' ? (
-                <p className={css.fieldHint}>{copy('submitSearchHint', locale)}</p>
-              ) : (candidates ?? []).length === 0 ? (
-                <p className={css.fieldHint}>{copy(mode === 'installed' ? 'submitInstalledEmpty' : 'submitSearchEmpty', locale)}</p>
-              ) : (candidates ?? []).map((member) => (
-                <MemberRow
-                  key={member.key}
-                  member={member}
-                  locale={locale}
-                  selected={selectedKeys.has(member.key)}
-                  disabled={selected.length >= SUBMISSION_MAX_MEMBERS}
-                  onAdd={() => addMember(member)}
-                />
-              ))}
+              <div className={css.memberResults}>
+                {loading ? (
+                  <p className={css.fieldHint}>{copy(queryActive ? 'submitSearchLoading' : 'submitInstalledLoading', locale)}</p>
+                ) : candidateError !== undefined ? (
+                  <p className={css.fieldError} role="alert">
+                    {fill(queryActive ? 'submitSearchError' : 'submitInstalledError', locale, { reason: candidateError })}
+                  </p>
+                ) : candidates.length === 0 ? (
+                  <p className={css.fieldHint}>{copy(queryActive ? 'submitSearchEmpty' : 'submitInstalledEmpty', locale)}</p>
+                ) : candidates.map((member) => (
+                  <MemberRow
+                    key={member.key}
+                    member={member}
+                    locale={locale}
+                    selected={selectedKeys.has(member.key)}
+                    disabled={selected.length >= SUBMISSION_MAX_MEMBERS && !selectedKeys.has(member.key)}
+                    installed={installedKeys.has(member.key)}
+                    onToggle={() => toggleMember(member)}
+                  />
+                ))}
+              </div>
             </div>
           </section>
 
