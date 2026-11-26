@@ -4,6 +4,7 @@
 /node_modules/
 
 # Local tooling
+/docs/
 *.tsbuildinfo
 coverage/
 .vitest/
