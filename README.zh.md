@@ -75,7 +75,7 @@
 pnpm install
 pnpm run check        # typecheck（三个工程）+ vitest + build
 pnpm run build        # 产出 lib/ 与 client/client.js
-npm pack              # dsh-suite-store-1.0.1.tgz
+npm pack              # dsh-suite-store-1.0.2.tgz
 ```
 
 ## 反馈

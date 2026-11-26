@@ -1,6 +1,6 @@
 {
   "name": "dsh-suite-store",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Browse, search, and Install or uninstall full sets of plugins with one click inside DeepSeek Harness · DSH 可视化插件整合包商店：浏览、搜索、一键安装与卸载一整套插件",
   "icon": "assets/logo.svg",
   "type": "module",

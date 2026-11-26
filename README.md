@@ -75,7 +75,7 @@ To share a suite, go to [**dsh-suite-store-catalog**](https://github.com/dsh-sui
 pnpm install
 pnpm run check        # typecheck (three projects) + vitest + build
 pnpm run build        # produces lib/ and client/client.js
-npm pack              # dsh-suite-store-1.0.1.tgz
+npm pack              # dsh-suite-store-1.0.2.tgz
 ```
 
 ## Feedback
