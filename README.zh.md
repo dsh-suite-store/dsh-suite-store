@@ -81,7 +81,7 @@ npm pack              # dsh-suite-store-1.0.1.tgz
 ## 反馈
 
 - Bug 提 [issues](https://github.com/dsh-suite-store/dsh-suite-store/issues)，描述里带上「在什么宿主上、装哪个包、卡在哪一步」比截图有用，带上导出的日志会让排查更加快速。
-- 整合包投稿和目录数据的修正请前往 [目录](https://github.com/dsh-suite-store/dsh-suite-store-catalog/issues)。
+- 整合包投稿和目录数据的修正请前往 [目录](https://github.com/dsh-suite-store/dsh-suite-store-catalog)。
 - 功能建议走 issues 也行。
 - 欢迎PR。
 

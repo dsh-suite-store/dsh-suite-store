@@ -81,7 +81,7 @@ npm pack              # dsh-suite-store-1.0.1.tgz
 ## Feedback
 
 - For bugs, open [issues](https://github.com/dsh-suite-store/dsh-suite-store/issues). Describing "which host, which package, and where it got stuck" is more useful than a screenshot; including the exported log makes diagnosis faster.
-- For suite submissions and catalog data fixes, go to the [catalog](https://github.com/dsh-suite-store/dsh-suite-store-catalog/issues).
+- For suite submissions and catalog data fixes, go to the [catalog](https://github.com/dsh-suite-store/dsh-suite-store-catalog).
 - Feature suggestions via issues are fine too.
 - PRs are welcome.
 
