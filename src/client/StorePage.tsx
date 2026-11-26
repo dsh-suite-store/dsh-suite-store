@@ -38,6 +38,7 @@ import type { CopyKey, Locale } from './copy.ts'
 import { Button, Icon, Input } from './ui.tsx'
 import { BundleCardView, primaryLabel, secondaryLabel } from './Card.tsx'
 import { DetailsDialog } from './Details.tsx'
+import { SubmissionDialog } from './SubmissionDialog.tsx'
 import { ProgressPanel } from './ProgressPanel.tsx'
 import css from './Store.module.css'
 
@@ -111,6 +112,7 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
    * browser's download list, and a toast for that would be noise.
    */
   const [exportState, setExportState] = useState<'idle' | 'busy'>('idle')
+  const [submissionOpen, setSubmissionOpen] = useState(false)
   const body = useRef<HTMLDivElement | null>(null)
   const sentinel = useRef<HTMLDivElement | null>(null)
 
@@ -330,6 +332,16 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
               report, so it belongs beside the title rather than among the
               filters. */}
           <div className={css.headActions}>
+            <a
+              className={css.submissionLink}
+              href="#submit-suite"
+              onClick={(event) => {
+                event.preventDefault()
+                setSubmissionOpen(true)
+              }}
+            >
+              {copy('submitSuite', locale)}
+            </a>
             <Button
               tone="secondary"
               disabled={exportState === 'busy'}
@@ -633,6 +645,17 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
           </div>
         )}
       </div>
+
+      {submissionOpen ? (
+        <SubmissionDialog
+          locale={locale}
+          categories={catalog?.categories ?? {}}
+          categoryLabels={catalog?.categoryLabels}
+          loadInstalled={store.submissionInstalled}
+          search={store.submissionSearch}
+          onClose={() => setSubmissionOpen(false)}
+        />
+      ) : null}
 
       {openCard === undefined ? null : (
         <DetailsDialog

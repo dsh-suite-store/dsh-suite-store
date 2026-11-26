@@ -254,6 +254,47 @@ function boot() {
     if (url.includes('/api/capabilities')) {
       return new Response(JSON.stringify({ canRestart: false, hostKind: 'desktop', installable: true }), { status: 200 });
     }
+    if (url.includes('/api/submission/installed') || url.includes('/api/submission/search')) {
+      const members = [
+        {
+          key: 'dsh-suite-store/dsh-suite-store',
+          owner: 'dsh-suite-store',
+          name: 'dsh-suite-store',
+          npm: 'dsh-suite-store',
+          version: '1.0.1',
+          url: 'https://github.com/dsh-suite-store/dsh-suite-store',
+          description: {
+            zh: '可视化整合包商店：浏览、搜索、一键安装与卸载一整套插件',
+            en: 'Browse, search, and install or uninstall full sets of plugins with one click.',
+          },
+        },
+        {
+          key: 'example/dsh-memory',
+          owner: 'example',
+          name: 'dsh-memory',
+          npm: '@example/dsh-memory',
+          version: '2.1.0',
+          url: 'https://github.com/example/dsh-memory',
+          description: {
+            zh: '为 Agent 提供长期记忆。',
+            en: 'Long-term memory for agents.',
+          },
+        },
+        {
+          key: 'another-owner/dsh-tools#packages/toolbox',
+          owner: 'another-owner',
+          name: 'dsh-tools#packages/toolbox',
+          npm: null,
+          version: null,
+          url: 'https://github.com/another-owner/dsh-tools/tree/main/packages/toolbox',
+          description: {
+            zh: '一组常用工具。',
+            en: 'A practical tool collection.',
+          },
+        },
+      ];
+      return new Response(JSON.stringify({ members }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }
     if (url.includes('/api/install')) {
       installStartedAt = Date.now();
       // The real route answers 200 with the whole record, because the caller

@@ -2363,3 +2363,291 @@
   font-size: 12px;
   line-height: 18px;
 }
+
+/* ── suite submission ─────────────────────────────────────────────────── */
+/* The trigger is an anchor, not a button: it opens a secondary workflow and
+   reads as a quiet utility next to the title. The underline appears on hover
+   and keyboard focus, matching the catalog links inside the sheet. */
+.submissionLink {
+  color: var(--dsw-alias-link, #4f6ef7);
+  font-size: 12px;
+  line-height: 28px;
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 0 2px;
+}
+
+.submissionLink:hover,
+.submissionLink:focus-visible {
+  text-decoration: underline;
+}
+
+.submissionDialog {
+  width: min(760px, 100%);
+  max-height: min(820px, 100%);
+}
+
+.submissionBody {
+  gap: 18px;
+}
+
+.submissionSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.submissionSectionTitle {
+  margin: 0;
+  font-family: var(--st-font-display);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
+.submissionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.submissionGridTwo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fieldLabelRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fieldHint {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--dsw-alias-label-tertiary, #8b93a1);
+}
+
+.fieldError {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--dsw-alias-state-error-primary, #c0392b);
+}
+
+.submissionSelect {
+  width: 100%;
+  height: 30px;
+  box-sizing: border-box;
+  border: 1px solid var(--dsw-alias-border-l2, #dde1e8);
+  border-radius: 7px;
+  background: var(--dsw-alias-bg-layer-1, #ffffff);
+  color: var(--dsw-alias-label-primary, #1f2328);
+  font-family: var(--st-font-text);
+  font-size: 12px;
+  padding: 0 8px;
+}
+
+.submissionSelect:focus {
+  outline: 2px solid var(--dsw-alias-label-primary, #1f2328);
+  outline-offset: -1px;
+}
+
+.memberCount {
+  flex: 0 0 auto;
+  font-family: var(--st-font-mono);
+  font-size: 11px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-secondary, #5c6570);
+}
+
+.selectedMembers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 28px;
+  padding: 7px 9px;
+  border: 1px dashed var(--dsw-alias-border-l2, #dde1e8);
+  border-radius: var(--st-radius);
+  background: var(--dsw-alias-bg-layer-2, #f7f8fa);
+  box-sizing: border-box;
+}
+
+.selectedMember {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 2px 4px 2px 7px;
+  border: 1px solid var(--dsw-alias-border-l2, #dde1e8);
+  border-radius: 999px;
+  background: var(--dsw-alias-bg-layer-1, #ffffff);
+}
+
+.selectedMember .memberKey {
+  max-width: 260px;
+  font-size: 11px;
+}
+
+.selectedRemove {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary, #8b93a1);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.selectedRemove:hover {
+  background: var(--dsw-alias-interactive-bg-hover, #2631480f);
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
+.modeTabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--dsw-alias-border-l1, #eef0f3);
+}
+
+.modeTab {
+  padding: 5px 8px 7px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary, #8b93a1);
+  font-family: var(--st-font-text);
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.modeTab:hover {
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
+.modeTabOn {
+  border-bottom-color: var(--st-accent);
+  color: var(--dsw-alias-label-primary, #1f2328);
+  font-weight: 600;
+}
+
+.memberSearch {
+  max-width: 100%;
+}
+
+.memberResults {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.memberResult {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--dsw-alias-border-l1, #eef0f3);
+  border-radius: var(--st-radius);
+  background: var(--dsw-alias-bg-layer-1, #ffffff);
+}
+
+.memberAddButton {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.memberResultSelected {
+  border-color: var(--dsw-alias-border-l2, #dde1e8);
+  background: var(--dsw-alias-bg-layer-2, #f7f8fa);
+}
+
+.memberResultText {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.memberResultText .memberKey {
+  font-size: 12px;
+  color: var(--dsw-alias-label-primary, #1f2328);
+}
+
+.memberMeta {
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary, #8b93a1);
+  font-size: 11px;
+  line-height: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.submissionGuide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 2px;
+  color: var(--dsw-alias-label-tertiary, #8b93a1);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.submissionGuideLink {
+  flex: 0 0 auto;
+  color: var(--dsw-alias-link, #4f6ef7);
+  text-decoration: none;
+}
+
+.submissionGuideLink:hover,
+.submissionGuideLink:focus-visible {
+  text-decoration: underline;
+}
+
+.generateButton {
+  margin-left: auto;
+}
+
+@media (max-width: 720px) {
+  .submissionGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .submissionGridTwo {
+    grid-template-columns: 1fr;
+  }
+
+  .submissionGuide {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .generateButton {
+    margin-left: 0;
+  }
+}

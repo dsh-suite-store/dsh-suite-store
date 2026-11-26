@@ -420,6 +420,8 @@ function fakeClient(
       failed: [],
       removed: [],
     }),
+    submissionInstalled: async () => ({ members: [] }),
+    submissionSearch: async () => ({ members: [] }),
     progress: () => () => undefined,
   }
   return client

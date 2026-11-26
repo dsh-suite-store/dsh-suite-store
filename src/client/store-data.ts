@@ -32,6 +32,7 @@ import type { UninstallChoice } from '../install/uninstall.ts'
 import type { InstallReport } from '../install/executor.ts'
 import type { UninstallReport } from '../server/routes.ts'
 import type { MemberStateView } from '../server/routes.ts'
+import type { CuratedMember } from '../submission/curated.ts'
 
 /**
  * A path under this plugin's route prefix, resolved against the page's base.
@@ -72,6 +73,11 @@ export type StoreCard = BundleCard & {
   installedByUser?: boolean
   installedCount?: number
   installed?: boolean
+}
+
+/** A curated member returned by the submission picker APIs. */
+export interface SubmissionMembersResponse {
+  members: CuratedMember[]
 }
 
 /** The `/api/bundles` answer: the catalog as this profile sees it. */
@@ -220,6 +226,10 @@ export interface StoreClient {
    * @param key - the member key the catalog gave it.
    */
   installMember(bundleId: string, key: string): Promise<InstallReport>
+  /** Installed plugins that are also present in the curated index. */
+  submissionInstalled(): Promise<SubmissionMembersResponse>
+  /** Search the curated plugin index for suite members. */
+  submissionSearch(query: string): Promise<SubmissionMembersResponse>
   /**
    * Follow the progress stream.
    *
@@ -339,6 +349,8 @@ export function createStoreClient(): StoreClient {
         method: 'POST',
         body: JSON.stringify({ id: bundleId, key }),
       }),
+    submissionInstalled: () => request<SubmissionMembersResponse>(`${API_BASE}/submission/installed`),
+    submissionSearch: (query) => request<SubmissionMembersResponse>(`${API_BASE}/submission/search?q=${encodeURIComponent(query)}`),
     progress: (onLine) => {
       // SSE rather than polling (§11②): the server already speaks it, and a
       // 12-member install emits ~40 lines, which polling at 1 Hz would either

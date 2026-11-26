@@ -33,6 +33,7 @@ import type {
   UninstallPreviewResponse,
 } from './store-data.ts'
 import type { UninstallReport } from '../server/routes.ts'
+import type { CuratedMember } from '../submission/curated.ts'
 
 /** What the page knows at any moment. */
 export interface PageState {
@@ -374,6 +375,10 @@ export interface PageStore {
   setMemberEnabled(id: string, enabled: boolean): Promise<boolean>
   /** Install one member of a bundle without taking the rest (§8.3). */
   installMember(bundleId: string, key: string): Promise<InstallReport>
+  /** Load installed plugins that are also curated index members. */
+  submissionInstalled(): Promise<CuratedMember[]>
+  /** Search curated index members for the submission picker. */
+  submissionSearch(query: string): Promise<CuratedMember[]>
 }
 
 /**
@@ -502,6 +507,8 @@ export function createPageStore(client: StoreClient): PageStore {
     memberStates: (bundleId) => client.memberStates(bundleId),
     setMemberEnabled: (id, enabled) => client.setMemberEnabled(id, enabled),
     installMember: (bundleId, key) => client.installMember(bundleId, key),
+    submissionInstalled: async () => (await client.submissionInstalled()).members,
+    submissionSearch: async (query) => (await client.submissionSearch(query)).members,
   }
 }
 
