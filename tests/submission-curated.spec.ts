@@ -1,3 +1,5 @@
+import { gzipSync } from 'node:zlib'
+
 import { describe, expect, it, vi } from 'vitest'
 
 import type { Transport, TransportResponse } from '../src/catalog/transport.ts'
@@ -35,8 +37,25 @@ function response(body: unknown, status = 200): TransportResponse {
   return {
     status,
     headers: {},
-    body: Buffer.from(typeof body === 'string' ? body : JSON.stringify(body)),
+    body: Buffer.isBuffer(body)
+      ? body
+      : Buffer.from(typeof body === 'string' ? body : JSON.stringify(body)),
   }
+}
+
+/** A minimal npm-style tarball, enough for the plugin tarball reader. */
+function packageTarball(entries: Record<string, string>): Buffer {
+  const blocks: Buffer[] = []
+  for (const [name, body] of Object.entries(entries)) {
+    const data = Buffer.from(body)
+    const header = Buffer.alloc(512)
+    header.write(name, 0, 'utf8')
+    header.write(data.length.toString(8).padStart(11, '0') + '\0', 124, 'ascii')
+    header.write('0', 156, 'ascii')
+    blocks.push(header, data, Buffer.alloc((512 - (data.length % 512)) % 512))
+  }
+  blocks.push(Buffer.alloc(1024))
+  return gzipSync(Buffer.concat(blocks))
 }
 
 function transportOf(...answers: Array<TransportResponse | Error>): Transport & { calls: number } {
@@ -89,6 +108,36 @@ describe('installed plugin matching', () => {
       { id: '@alice/alpha' },
     ])
     expect(matches).toHaveLength(1)
+  })
+})
+
+describe('curated package delivery', () => {
+  it('uses the npm mirror tarball before the 16 MB raw JSON sources', async () => {
+    const calls: string[] = []
+    const transport: Transport = {
+      async get(url) {
+        calls.push(url)
+        if (url === 'https://registry.npmmirror.com/dsh-plugin-catalog/latest') {
+          return response({
+            version: '2026.1126.1',
+            dist: { tarball: 'https://registry.npmmirror.com/dsh-plugin-catalog/-/catalog.tgz' },
+          })
+        }
+        if (url === 'https://registry.npmmirror.com/dsh-plugin-catalog/-/catalog.tgz') {
+          return response(packageTarball({ 'package/plugins.json': JSON.stringify(INDEX) }))
+        }
+        throw new Error('raw JSON source should not be reached')
+      },
+    }
+    const index = new CuratedIndex({
+      transport,
+      registries: ['https://registry.npmmirror.com'],
+      sources: ['https://awesome-dsh-plugin.com/plugins.json'],
+    })
+    expect((await index.search('alpha'))[0]?.key).toBe('Alice/alpha')
+    expect(calls[0]).toBe('https://registry.npmmirror.com/dsh-plugin-catalog/latest')
+    expect(calls[1]).toBe('https://registry.npmmirror.com/dsh-plugin-catalog/-/catalog.tgz')
+    expect(calls).not.toContain('https://awesome-dsh-plugin.com/plugins.json')
   })
 })
 

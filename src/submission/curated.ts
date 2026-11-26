@@ -9,6 +9,7 @@
 import type { Transport } from '../catalog/transport.ts'
 import type { LocalizedText } from '../catalog/types.ts'
 import type { InstalledEntry } from '../install/host.ts'
+import { fileFromTarball } from '../catalog/tarball.ts'
 
 /** One selectable member from the curated index. */
 export interface CuratedMember {
@@ -37,17 +38,29 @@ interface LoadedIndex {
 
 export interface CuratedIndexOptions {
   transport: Transport
-  /** Ordered index URLs. Production defaults to the official site then jsDelivr. */
+  /** Ordered npm registries carrying the dsh-plugin-catalog package. */
+  registries?: readonly string[]
+  /** Ordered raw JSON fallbacks. Supplying only this disables package delivery. */
   sources?: readonly string[]
   ttlMs?: number
   now?: () => number
   timeoutMs?: number
+  totalTimeoutMs?: number
   maxBytes?: number
 }
 
 const DEFAULT_TTL_MS = 30 * 60 * 1000
-const DEFAULT_TIMEOUT_MS = 60_000
+const DEFAULT_TIMEOUT_MS = 45_000
+const DEFAULT_TOTAL_TIMEOUT_MS = 45_000
 const DEFAULT_MAX_BYTES = 32 * 1024 * 1024
+const PACKAGE_NAME = 'dsh-plugin-catalog'
+const PACKAGE_FILE = 'package/plugins.json'
+const METADATA_MAX_BYTES = 1024 * 1024
+const TARBALL_MAX_BYTES = 12 * 1024 * 1024
+const DEFAULT_REGISTRIES = [
+  'https://registry.npmmirror.com',
+  'https://registry.npmjs.org',
+] as const
 const DEFAULT_SOURCES = [
   'https://awesome-dsh-plugin.com/plugins.json',
   'https://cdn.jsdelivr.net/npm/dsh-plugin-catalog/plugins.json',
@@ -192,20 +205,25 @@ function publicMember(member: IndexedMember): CuratedMember {
 /** A cached, searchable projection of the curated plugin index. */
 export class CuratedIndex {
   private readonly transport: Transport
+  private readonly registries: readonly string[]
   private readonly sources: readonly string[]
   private readonly ttlMs: number
   private readonly now: () => number
   private readonly timeoutMs: number
+  private readonly totalTimeoutMs: number
   private readonly maxBytes: number
-  private cached: { at: number; index: LoadedIndex } | undefined
+  private cached: { at: number; index: LoadedIndex; version?: string } | undefined
   private inflight: Promise<LoadedIndex> | undefined
+  private lastFailure: { at: number; error: Error } | undefined
 
   constructor(options: CuratedIndexOptions) {
     this.transport = options.transport
+    this.registries = options.registries ?? (options.sources === undefined ? DEFAULT_REGISTRIES : [])
     this.sources = options.sources ?? DEFAULT_SOURCES
     this.ttlMs = options.ttlMs ?? DEFAULT_TTL_MS
     this.now = options.now ?? Date.now
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS
+    this.totalTimeoutMs = options.totalTimeoutMs ?? DEFAULT_TOTAL_TIMEOUT_MS
     this.maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES
   }
 
@@ -258,22 +276,45 @@ export class CuratedIndex {
 
   private async load(): Promise<LoadedIndex> {
     if (this.cached !== undefined && this.now() - this.cached.at < this.ttlMs) return this.cached.index
+    if (this.lastFailure !== undefined && this.now() - this.lastFailure.at < 15_000) throw this.lastFailure.error
     if (this.inflight !== undefined) return this.inflight
-    this.inflight = this.fetchIndex().then((index) => {
-      this.cached = { at: this.now(), index }
+    this.inflight = this.fetchIndex().then(({ index, version }) => {
+      this.cached = { at: this.now(), index, ...(version === undefined ? {} : { version }) }
+      this.lastFailure = undefined
       return index
+    }).catch((error: unknown) => {
+      const failure = error instanceof Error ? error : new Error(String(error))
+      this.lastFailure = { at: this.now(), error: failure }
+      throw failure
     }).finally(() => {
       this.inflight = undefined
     })
     return this.inflight
   }
 
-  private async fetchIndex(): Promise<LoadedIndex> {
+  /**
+   * Prefer the compact npm tarball: about 6 MB compressed instead of the
+   * 16–24 MB raw JSON, and every China mirror already carries it.
+   */
+  private async fetchIndex(): Promise<{ index: LoadedIndex; version?: string }> {
     const failures: string[] = []
+    const started = this.now()
+    const remaining = (): number => Math.max(1, this.totalTimeoutMs - (this.now() - started))
+    const timeout = (): number => Math.min(this.timeoutMs, remaining())
+
+    for (const registry of this.registries) {
+      try {
+        const answer = await this.fetchPackage(registry, timeout())
+        if (answer !== undefined) return answer
+      } catch (error) {
+        failures.push(`${registry}: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    }
+
     for (const source of this.sources) {
       try {
         const response = await this.transport.get(source, {
-          timeoutMs: this.timeoutMs,
+          timeoutMs: timeout(),
           maxBytes: this.maxBytes,
           headers: { accept: 'application/json' },
         })
@@ -287,11 +328,42 @@ export class CuratedIndex {
           failures.push(`${source}: parsed zero plugins`)
           continue
         }
-        return index
+        return { index }
       } catch (error) {
         failures.push(`${source}: ${error instanceof Error ? error.message : String(error)}`)
       }
     }
     throw new Error(`could not read the curated plugin index\n  ${failures.join('\n  ')}`)
+  }
+
+  private async fetchPackage(registry: string, timeoutMs: number): Promise<{ index: LoadedIndex; version: string } | undefined> {
+    const base = registry.replace(/\/+$/u, '')
+    const metadataUrl = `${base}/${encodeURIComponent(PACKAGE_NAME)}/latest`
+    const metadataResponse = await this.transport.get(metadataUrl, {
+      timeoutMs,
+      maxBytes: METADATA_MAX_BYTES,
+      headers: { accept: 'application/json' },
+    })
+    if (metadataResponse.status !== 200) throw new Error(`metadata HTTP ${String(metadataResponse.status)}`)
+    const metadata = JSON.parse(metadataResponse.body.toString('utf8')) as {
+      version?: unknown
+      dist?: { tarball?: unknown }
+    }
+    const version = typeof metadata.version === 'string' ? metadata.version : undefined
+    const tarball = typeof metadata.dist?.tarball === 'string' ? metadata.dist.tarball : undefined
+    if (version === undefined || tarball === undefined) throw new Error('metadata names no version or tarball')
+    if (this.cached?.version === version) return { index: this.cached.index, version }
+
+    const tarballResponse = await this.transport.get(tarball, {
+      timeoutMs,
+      maxBytes: TARBALL_MAX_BYTES,
+      headers: { accept: 'application/octet-stream' },
+    })
+    if (tarballResponse.status !== 200) throw new Error(`tarball HTTP ${String(tarballResponse.status)}`)
+    const body = fileFromTarball(tarballResponse.body, PACKAGE_FILE)
+    if (body === undefined) throw new Error(`package carries no ${PACKAGE_FILE}`)
+    const index = build(JSON.parse(body.toString('utf8')) as unknown)
+    if (index.members.length === 0) throw new Error('package parsed zero plugins')
+    return { index, version }
   }
 }
