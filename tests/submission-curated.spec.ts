@@ -141,6 +141,41 @@ describe('curated package delivery', () => {
   })
 })
 
+describe('global registry failover', () => {
+  it('takes the fastest responsive registry instead of waiting for a stalled mirror', async () => {
+    const calls: string[] = []
+    const transport: Transport = {
+      async get(url) {
+        calls.push(url)
+        if (url === 'https://registry.npmmirror.com/dsh-plugin-catalog/latest') {
+          return new Promise<TransportResponse>(() => {})
+        }
+        if (url === 'https://registry.npmjs.org/dsh-plugin-catalog/latest') {
+          return response({
+            version: '2026.1126.2',
+            dist: { tarball: 'https://registry.npmjs.org/dsh-plugin-catalog/-/catalog.tgz' },
+          })
+        }
+        if (url === 'https://registry.npmjs.org/dsh-plugin-catalog/-/catalog.tgz') {
+          return response(packageTarball({ 'package/plugins.json': JSON.stringify(INDEX) }))
+        }
+        throw new Error('unexpected URL ' + url)
+      },
+    }
+    const index = new CuratedIndex({
+      transport,
+      registries: ['https://registry.npmmirror.com', 'https://registry.npmjs.org'],
+      sources: [],
+    })
+    const rows = await Promise.race([
+      index.search('alpha'),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('test timeout')), 500)),
+    ])
+    expect(rows[0]?.key).toBe('Alice/alpha')
+    expect(calls).toContain('https://registry.npmjs.org/dsh-plugin-catalog/latest')
+    expect(calls).toContain('https://registry.npmjs.org/dsh-plugin-catalog/-/catalog.tgz')
+  })
+})
 describe('curated index caching', () => {
   it('reuses one download inside the TTL and refreshes after it', async () => {
     let now = 1_000
