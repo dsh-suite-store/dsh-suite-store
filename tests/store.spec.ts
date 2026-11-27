@@ -295,6 +295,21 @@ function build(
 // --------------------------------------------------------------------- cards
 
 describe('store service cards', () => {
+  it('reports build approval from the profile, not the catalog hint', async () => {
+    // The catalog's field is advisory and has shipped wrong values: it treated
+    // capability red lines as proof of a build script. The card must agree with
+    // the preflight the install button actually asks.
+    const { service } = build({
+      catalog: fakeCatalog(snapshot([card({ needsBuildApproval: true })])),
+    })
+
+    const [view] = await service.cards()
+    const answer = await service.preflight('fin')
+
+    expect(view?.needsBuildApproval).toBe(false)
+    expect(answer.summary.needsBuildApproval).toBe(false)
+  })
+
   it('reports a fresh bundle as not installed', async () => {
     const { service } = build()
     const [view] = await service.cards()

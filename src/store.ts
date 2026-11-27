@@ -258,7 +258,17 @@ export class StoreService {
     // a hand-installed plugin, or one another suite pulled in, would otherwise
     // make this suite look installed without the user ever running it.
     const byUser = installedBundles(await this.store.readProvenance())
-    return current.index.bundles.map((card) => this.view(card, installed, byUser.has(card.id)))
+    // The catalog's flag is advisory and can be wrong: the published builder
+    // once derived it from capability red lines, which are permission risks,
+    // not package build scripts. The card must use the same profile fact as the
+    // preflight; otherwise it promises an approval dialog that never appears.
+    const pendingBuilds = await this.pendingBuildKeys()
+    return current.index.bundles.map((card) => this.view(
+      card,
+      installed,
+      byUser.has(card.id),
+      pendingBuilds.length > 0,
+    ))
   }
 
   /**
@@ -294,9 +304,7 @@ export class StoreService {
     // host validates each one against its own pending list and rejects a
     // label it does not know as `stale-approval`. Reading the same two
     // sources keeps the sheet and the host agreeing on what is approved.
-    const fromFile = await this.store.pendingBuilds()
-    const fromRefusals = this.refusedBuildKeys(await this.store.listOperations())
-    const pending = [...new Set([...fromFile, ...fromRefusals])]
+    const pending = await this.pendingBuildKeys()
     return {
       summary: {
         steps: plan.steps.length,
@@ -316,11 +324,18 @@ export class StoreService {
   }
 
   /**
-   * The plan for one bundle, or the reason there is nothing to do.
+   * Every build decision that is still pending in this profile.
    *
-   * Shared by the preflight and by a one-click install, so the sheet and the
-   * run can never disagree about what will happen.
+   * Both card badges and preflight use this one read so they cannot disagree:
+   * a card that says an approval is needed must be followed by a sheet that
+   * actually offers one.
    */
+  private async pendingBuildKeys(): Promise<string[]> {
+    const fromFile = await this.store.pendingBuilds()
+    const fromRefusals = this.refusedBuildKeys(await this.store.listOperations())
+    return [...new Set([...fromFile, ...fromRefusals])]
+  }
+
   /**
    * Build keys recorded by a member that pnpm refused to prepare.
    *
@@ -353,6 +368,12 @@ export class StoreService {
     return [...newest.values()]
   }
 
+  /**
+   * The plan for one bundle, or the reason there is nothing to do.
+   *
+   * Shared by the preflight and by a one-click install, so the sheet and the
+   * run can never disagree about what will happen.
+   */
   private async prepare(id: string, approvedBuilds: readonly string[] = []): Promise<InstallPlan> {
     const detail = await this.detail(id)
     if (detail === undefined) throw new Error(`no bundle named ${id}`)
@@ -1469,7 +1490,12 @@ export class StoreService {
   }
 
   /** One card joined with the profile's answer about its members. */
-  private view(card: BundleCard, installed: Map<string, InstalledEntry>, installedByUser: boolean): BundleCardView {
+  private view(
+    card: BundleCard,
+    installed: Map<string, InstalledEntry>,
+    installedByUser: boolean,
+    needsBuildApproval: boolean,
+  ): BundleCardView {
     const members = card.members
     const present: string[] = []
     for (const member of members) {
@@ -1477,6 +1503,7 @@ export class StoreService {
     }
     return {
       ...card,
+      needsBuildApproval,
       installedCount: present.length,
       installedMembers: present,
       // Both halves have to agree: a run from this store AND something still on
