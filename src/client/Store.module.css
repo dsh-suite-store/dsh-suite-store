@@ -59,7 +59,12 @@
   --st-measure: 62ch;
 
   font-family: var(--st-font-text);
+  /* The host slot is fixed-height and non-scrolling. The store root is the
+     single page scroll container, so the header and filters scroll with the
+     cards instead of stranding all scrolling inside the list body. */
   height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -76,21 +81,33 @@
   /* §8.1: the host's plugin pages are 1024 wide. A store that stretches to a
      27-inch monitor reads as a different product bolted onto the same app. */
   width: 100%;
+}
+
+/* The scrollbar belongs to the full host pane, while the product itself keeps
+   the 1024px reading width. */
+.chrome {
+  position: sticky;
+  top: 0;
+  z-index: 7;
+  width: 100%;
   max-width: 1024px;
+  margin: 0 auto;
+  background: var(--dsw-alias-bg-base, #ffffff);
+}
+
+.page {
+  width: 100%;
+  max-width: 1024px;
+  min-height: 100%;
   margin: 0 auto;
 }
 
 .body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  flex: 0 0 auto;
+  overflow: visible;
   /* Scroll anchoring is left ON (the default): when pagination appends cards
      below the viewport the browser keeps the reader's card where it is, which
-     is what makes "load more" feel like appending rather than jumping. The
-     `overflow-anchor: none` that used to sit here did the opposite — it turned
-     that off, so a late-loading cover image or a progress panel reflowing above
-     the viewport moved the content the reader was looking at. */
+     is what makes "load more" feel like appending rather than jumping. */
   padding: 0 0 32px;
 }
 
@@ -110,6 +127,12 @@
      plugin surface — so this padding is the only breathing room the title has. */
   padding: 28px var(--st-gutter) 16px;
   border-bottom: 1px solid var(--dsw-alias-border-l1, #eef0f3);
+}
+
+.headInner {
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
 }
 
 /* Title and actions share the first row; the catalog summary and plugin
@@ -240,9 +263,8 @@
 
 .toolbar {
   flex: 0 0 auto;
-  position: sticky;
-  top: 0;
-  z-index: 5;
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;

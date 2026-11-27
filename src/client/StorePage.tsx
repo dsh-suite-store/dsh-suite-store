@@ -123,7 +123,7 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
    */
   const [exportState, setExportState] = useState<'idle' | 'busy'>('idle')
   const [submissionOpen, setSubmissionOpen] = useState(false)
-  const body = useRef<HTMLDivElement | null>(null)
+  const root = useRef<HTMLDivElement | null>(null)
   const sentinel = useRef<HTMLDivElement | null>(null)
 
   // The store is external and long-lived; the page is not. Both of these are
@@ -261,7 +261,7 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
       if (entries.some((entry) => entry.isIntersecting)) {
         setVisible((current) => Math.min(current + PAGE_SIZE, cards.length))
       }
-    }, { root: body.current, rootMargin: '200px' })
+    }, { root: root.current, rootMargin: '200px' })
     observer.observe(node)
     return () => observer.disconnect()
   }, [visible, cards.length])
@@ -322,11 +322,13 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
   }, [open, openCard])
 
   return (
-    <div className={css.root}>
+    <div className={css.root} ref={root}>
+      <div className={css.chrome}>
       {/* A title and one fact, kept deliberately quiet. No backdrop, no
           display type, no button: the first card is 40px below and is what the
           page is for. */}
       <header className={css.head}>
+        <div className={css.headInner}>
         <div className={css.headRow}>
           <h1 className={css.title}>{copy('pageTitle', locale)}</h1>
           {/* The log export, top right. It used to sit inside the view row,
@@ -395,6 +397,7 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
             </span>
           )}
         </p>
+        </div>
       </header>
 
       <div className={css.views} role="tablist">
@@ -578,7 +581,10 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
         </div>
       )}
 
-      <div className={css.body} ref={body}>
+      </div>
+
+      <div className={css.page}>
+      <div className={css.body}>
         {operation === undefined ? null : (
           <ProgressPanel
             operation={operation}
@@ -676,6 +682,7 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
             </Button>
           </div>
         )}
+      </div>
       </div>
 
       {submissionOpen ? (
