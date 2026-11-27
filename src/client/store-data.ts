@@ -26,7 +26,7 @@
 
 import { selectBundles } from '../catalog/types.ts'
 import type { BundleCard, BundleDetail, FilterOptions, LocalizedText, SortMode } from '../catalog/types.ts'
-import { localeTag, t, type Locale } from './copy.ts'
+import { fill, localeTag, t, type Locale } from './copy.ts'
 import type { OperationKind, OperationRecord } from '../install/operation.ts'
 import type { UninstallChoice } from '../install/uninstall.ts'
 import type { InstallReport } from '../install/executor.ts'
@@ -65,6 +65,21 @@ export function api(path: string): string {
  * silent 404 for every call.
  */
 const API_BASE = '/dsh-suite-store/api'
+
+/** The public repository behind this plugin. */
+export const STORE_REPOSITORY_URL = 'https://github.com/dsh-suite-store/dsh-suite-store'
+
+/** The linked plugin identity shown under the page title. */
+export function pluginIdentity(locale: Locale): string {
+  return t('pluginIdentity', locale)
+}
+
+/** The installed plugin version, or nothing until capabilities arrive. */
+export function pluginVersionLabel(version: string | undefined): string | undefined {
+  return version === undefined || version.trim() === ''
+    ? undefined
+    : fill('pluginVersion', 'en', { version: version.trim() })
+}
 
 /** A catalog card joined with what this profile holds of it. */
 export type StoreCard = BundleCard & {
@@ -126,6 +141,8 @@ export interface PreflightResponse {
 
 /** The `/api/capabilities` answer (§7.2). */
 export interface CapabilitiesResponse {
+  /** Running package version, when the host supplies it. */
+  version?: string
   hostKind: 'cli' | 'desktop'
   installable: boolean
   canRestart: boolean

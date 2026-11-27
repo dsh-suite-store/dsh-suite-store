@@ -430,6 +430,7 @@ export function storeRoutes(api: StoreApi, environmentInfo?: RouteEnvironment): 
         if (request.method !== 'GET') return methodNotAllowed(response, ['GET'])
         sendJson(response, 200, {
           ...api.capabilities(),
+          ...(environmentInfo === undefined ? {} : { version: environmentInfo.version }),
           // Absent until the client half has mounted at least once. A browser
           // that never reports is the signal that `apply()` did not run.
           ...(clientReport === undefined ? {} : { clientReport }),

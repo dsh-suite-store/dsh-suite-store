@@ -64,6 +64,14 @@ describe('store routes', () => {
     expect((payload.bundles as unknown[]).length).toBe(1)
   })
 
+  it('reports the running package version with capabilities', async () => {
+    const routes = storeRoutes(fakeApi(), { version: '1.2.3', profile: '/tmp/profile' })
+    const route = routes.find((entry) => entry.path.endsWith('/capabilities'))!
+    const ex = exchange('GET', `${ROUTE_PREFIX}/api/capabilities`, undefined, {})
+    await route.handler(ex.request, ex.response)
+    expect(JSON.parse(ex.body())).toMatchObject({ version: '1.2.3' })
+  })
+
   it('answers 503 with the fetch failure when the catalog cannot be read', async () => {
     const ex = await call('GET', '/api/bundles', {
       api: fakeApi({

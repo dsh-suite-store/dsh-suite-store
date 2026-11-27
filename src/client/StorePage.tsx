@@ -26,7 +26,17 @@ import type { ReactNode } from 'react'
 import type { FilterOptions, SortMode } from '../catalog/types.ts'
 import type { UninstallChoice } from '../install/uninstall.ts'
 import type { MemberStateView } from '../server/routes.ts'
-import { categoryCounts, inView, isLiveStatus, orderChipsByCount, orderTabsByCount, progressOf } from './store-data.ts'
+import {
+  STORE_REPOSITORY_URL,
+  categoryCounts,
+  inView,
+  isLiveStatus,
+  orderChipsByCount,
+  orderTabsByCount,
+  pluginIdentity,
+  pluginVersionLabel,
+  progressOf,
+} from './store-data.ts'
 import type { StoreView } from './store-data.ts'
 import { api } from './store-data.ts'
 import { exportMarketLog } from './self-check.ts'
@@ -168,6 +178,7 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
   }, [filters, query])
 
   const catalog = state.catalog
+  const pluginVersion = pluginVersionLabel(state.capabilities?.version)
   // Filtering and ordering happen here, not on the server (§8.6): the wire
   // sends the whole catalog and the page selects. Skipping this step left
   // search, the category tabs and the sort menus drawing every bundle.
@@ -317,14 +328,7 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
           page is for. */}
       <header className={css.head}>
         <div className={css.headRow}>
-          <div className={css.headText}>
-            <h1 className={css.title}>{copy('pageTitle', locale)}</h1>
-            <p className={css.sub}>
-              {catalog === undefined
-                ? copy('pageSubtitleLoading', locale)
-                : fill('pageSubtitle', locale, { count: cards.length, date: catalog.generatedAt.slice(0, 10) })}
-            </p>
-          </div>
+          <h1 className={css.title}>{copy('pageTitle', locale)}</h1>
           {/* The log export, top right. It used to sit inside the view row,
               which is a `role="tablist"` — a non-tab button there is a lie to a
               screen reader, and it also read as a fourth view. This is a
@@ -366,6 +370,31 @@ export function StorePage({ store, locale, initialQuery }: StorePageProps): Reac
             </Button>
           </div>
         </div>
+        <p className={css.sub}>
+          <span className={css.subSummary}>
+            {catalog === undefined
+              ? copy('pageSubtitleLoading', locale)
+              : fill('pageSubtitle', locale, {
+                count: cards.length,
+                date: catalog.generatedAt.slice(0, 10),
+              })}
+          </span>
+          {catalog === undefined ? null : (
+            <span className={css.pluginMeta}>
+              <a
+                className={css.pluginLink}
+                href={STORE_REPOSITORY_URL}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                {pluginIdentity(locale)}
+              </a>
+              {pluginVersion === undefined ? null : (
+                <span className={css.pluginVersion}>{pluginVersion}</span>
+              )}
+            </span>
+          )}
+        </p>
       </header>
 
       <div className={css.views} role="tablist">

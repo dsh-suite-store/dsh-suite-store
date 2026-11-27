@@ -112,22 +112,14 @@
   border-bottom: 1px solid var(--dsw-alias-border-l1, #eef0f3);
 }
 
-/* Title and subtitle on the left, the log export on the right. `align-items:
-   flex-start` keeps the button on the title's line rather than centred against
-   a two-line block, which is where it looked like a stray control. */
+/* Title and actions share the first row; the catalog summary and plugin
+   identity share the second. The second row spans the whole header, so the
+   plugin metadata lands on the same right edge as the actions. */
 .headRow {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
-
-.headText {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 .headActions {
@@ -147,9 +139,42 @@
 
 .sub {
   margin: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
   font-size: 12px;
   line-height: 18px;
   color: var(--dsw-alias-label-tertiary, #8b93a1);
+}
+
+.subSummary {
+  min-width: 0;
+}
+
+.pluginMeta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.pluginLink {
+  color: inherit;
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+.pluginLink:hover,
+.pluginLink:focus-visible {
+  color: var(--dsw-alias-label-secondary, #5f6775);
+  text-decoration: underline;
+}
+
+.pluginVersion {
+  white-space: nowrap;
 }
 
 /* The progress panel rises in when an operation starts. A page where every

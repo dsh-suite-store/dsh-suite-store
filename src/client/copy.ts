@@ -450,6 +450,8 @@ export const COPY = {
   // store has three names.
   pageTitle: { zh: '插件整合包商店', en: 'Plugin Suite Store' },
   pageSubtitle: { zh: '{count} 个整合包 · 目录更新于 {date}', en: '{count} suites · catalog updated {date}' },
+  pluginIdentity: { zh: 'dsh-suite-store', en: 'dsh-suite-store' },
+  pluginVersion: { zh: 'v{version}', en: 'v{version}' },
   pageSubtitleLoading: { zh: '正在读取目录…', en: 'Reading the catalog…' },
   loadingCatalog: { zh: '正在加载整合包…', en: 'Loading suites…' },
   emptyCatalog: { zh: '目录里还没有整合包', en: 'The catalog lists no suites yet' },
