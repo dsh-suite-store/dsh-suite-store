@@ -43,10 +43,19 @@ describe('submission draft validation', () => {
     ])
   })
 
-  it('applies the catalog summary limit by Unicode code point', () => {
-    const issues = validateDraft(draft({ summary: { en: 'x'.repeat(41), zh: '好'.repeat(41) } }), CATEGORIES)
-    expect(issues.map((issue) => issue.field)).toEqual(['summary.en', 'summary.zh'])
-    expect(issues.every((issue) => issue.code === 'summary-too-long')).toBe(true)
+  it('shares one 100-character limit across title and summary', () => {
+    expect(validateDraft(draft({
+      title: { en: 'x'.repeat(100), zh: '好'.repeat(100) },
+      summary: { en: 'x'.repeat(100), zh: '好'.repeat(100) },
+    }), CATEGORIES)).toEqual([])
+    const issues = validateDraft(draft({
+      title: { en: 'x'.repeat(101), zh: '好'.repeat(101) },
+      summary: { en: 'x'.repeat(101), zh: '好'.repeat(101) },
+    }), CATEGORIES)
+    expect(issues.map((issue) => issue.field)).toEqual([
+      'title.en', 'title.zh', 'summary.en', 'summary.zh',
+    ])
+    expect(issues.every((issue) => issue.code === 'text-too-long')).toBe(true)
   })
 
   it('requires 2-10 unique, well-formed members', () => {

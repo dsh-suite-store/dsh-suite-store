@@ -16,6 +16,7 @@
 
 /** The two languages the store is written in. */
 import { createContext } from 'react'
+import { SUBMISSION_LOCALIZED_TEXT_MAX } from '../submission/model.ts'
 
 export type Locale = 'zh' | 'en'
 
@@ -404,7 +405,10 @@ export const COPY = {
   submitSummaryField: { zh: '摘要', en: 'Summary' },
   submitSummaryEn: { zh: '英文摘要', en: 'English summary' },
   submitSummaryZh: { zh: '中文摘要（选填）', en: 'Chinese summary (optional)' },
-  submitSummaryCount: { zh: '{count}/40', en: '{count}/40' },
+  submitSummaryCount: {
+    zh: `{count}/${SUBMISSION_LOCALIZED_TEXT_MAX}`,
+    en: `{count}/${SUBMISSION_LOCALIZED_TEXT_MAX}`,
+  },
   submitCategory: { zh: '一级分类', en: 'Primary category' },
   submitCategoryPlaceholder: { zh: '选择分类', en: 'Choose a category' },
   submitMembers: { zh: '成员插件', en: 'Member plugins' },
@@ -438,8 +442,10 @@ export const COPY = {
   submitErrorOwner: { zh: 'GitHub 登录名格式不正确', en: 'Invalid GitHub login' },
   submitErrorId: { zh: '整合包 ID 格式不正确', en: 'Invalid suite ID' },
   submitErrorVersion: { zh: '版本号必须是 MAJOR.MINOR.PATCH', en: 'Version must be MAJOR.MINOR.PATCH' },
-  submitErrorTitleLong: { zh: '标题超过 80 个字符', en: 'Title exceeds 80 characters' },
-  submitErrorSummaryLong: { zh: '摘要超过 40 个字符', en: 'Summary exceeds 40 characters' },
+  submitErrorTextLong: {
+    zh: `多语言文本超过 ${SUBMISSION_LOCALIZED_TEXT_MAX} 个字符`,
+    en: `Localized text exceeds ${SUBMISSION_LOCALIZED_TEXT_MAX} characters`,
+  },
   submitErrorCategory: { zh: '请选择有效分类', en: 'Choose a valid category' },
   submitErrorMemberCount: { zh: '成员数量必须为 2–10 个', en: 'Choose 2–10 members' },
   submitErrorInvalidMember: { zh: '存在格式不正确的成员', en: 'A member reference is malformed' },

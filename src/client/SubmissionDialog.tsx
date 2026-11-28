@@ -13,7 +13,7 @@ import type { LocalizedText } from '../catalog/types.ts'
 import type { CuratedMember } from '../submission/curated.ts'
 import {
   SUBMISSION_MAX_MEMBERS,
-  SUBMISSION_SUMMARY_MAX,
+  SUBMISSION_LOCALIZED_TEXT_MAX,
   submissionFilename,
   submissionYaml,
   validateDraft,
@@ -48,8 +48,7 @@ const ERROR_COPY: Record<DraftIssueCode, CopyKey> = {
   'invalid-owner': 'submitErrorOwner',
   'invalid-id': 'submitErrorId',
   'invalid-version': 'submitErrorVersion',
-  'text-too-long': 'submitErrorTitleLong',
-  'summary-too-long': 'submitErrorSummaryLong',
+  'text-too-long': 'submitErrorTextLong',
   'invalid-category': 'submitErrorCategory',
   'member-count': 'submitErrorMemberCount',
   'invalid-member': 'submitErrorInvalidMember',
@@ -356,7 +355,7 @@ export function SubmissionDialog(props: SubmissionDialogProps): ReactNode {
                 </label>
                 <div className={css.fieldLabelRow}>
                   <span className={css.fieldHint}>{copy('submitSummaryZh', locale)}</span>
-                  <span className={css.fieldHint}>{[...draft.summary.zh.trim()].length}/{SUBMISSION_SUMMARY_MAX}</span>
+                  <span className={css.fieldHint}>{[...draft.summary.zh.trim()].length}/{SUBMISSION_LOCALIZED_TEXT_MAX}</span>
                 </div>
                 <Input value={draft.summary.zh} onChange={(value) => setLocalized('summary', 'zh', value)} label={copy('submitSummaryZh', locale)} />
                 {renderErrors('summary.zh')}

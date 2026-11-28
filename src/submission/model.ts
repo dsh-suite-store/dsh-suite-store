@@ -9,8 +9,7 @@
 /** Member rules currently enforced by dsh-suite-store-catalog. */
 export const SUBMISSION_MIN_MEMBERS = 2
 export const SUBMISSION_MAX_MEMBERS = 10
-export const SUBMISSION_SUMMARY_MAX = 40
-export const SUBMISSION_TITLE_MAX = 80
+export const SUBMISSION_LOCALIZED_TEXT_MAX = 100
 
 const OWNER_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/u
 const ID_PATTERN = /^[a-z0-9][a-z0-9-]{1,38}$/u
@@ -35,7 +34,6 @@ export type DraftIssueCode =
   | 'invalid-id'
   | 'invalid-version'
   | 'text-too-long'
-  | 'summary-too-long'
   | 'invalid-category'
   | 'member-count'
   | 'invalid-member'
@@ -79,19 +77,19 @@ export function validateDraft(draft: SubmissionDraft, categories: readonly strin
   else if (!VERSION_PATTERN.test(version)) issues.push({ field: 'version', code: 'invalid-version' })
 
   if (trim(draft.title.en) === '') issues.push({ field: 'title.en', code: 'required' })
-  else if ([...trim(draft.title.en)].length > SUBMISSION_TITLE_MAX) {
+  else if ([...trim(draft.title.en)].length > SUBMISSION_LOCALIZED_TEXT_MAX) {
     issues.push({ field: 'title.en', code: 'text-too-long' })
   }
-  if (trim(draft.title.zh) !== '' && [...trim(draft.title.zh)].length > SUBMISSION_TITLE_MAX) {
+  if (trim(draft.title.zh) !== '' && [...trim(draft.title.zh)].length > SUBMISSION_LOCALIZED_TEXT_MAX) {
     issues.push({ field: 'title.zh', code: 'text-too-long' })
   }
 
   if (trim(draft.summary.en) === '') issues.push({ field: 'summary.en', code: 'required' })
-  else if ([...trim(draft.summary.en)].length > SUBMISSION_SUMMARY_MAX) {
-    issues.push({ field: 'summary.en', code: 'summary-too-long' })
+  else if ([...trim(draft.summary.en)].length > SUBMISSION_LOCALIZED_TEXT_MAX) {
+    issues.push({ field: 'summary.en', code: 'text-too-long' })
   }
-  if (trim(draft.summary.zh) !== '' && [...trim(draft.summary.zh)].length > SUBMISSION_SUMMARY_MAX) {
-    issues.push({ field: 'summary.zh', code: 'summary-too-long' })
+  if (trim(draft.summary.zh) !== '' && [...trim(draft.summary.zh)].length > SUBMISSION_LOCALIZED_TEXT_MAX) {
+    issues.push({ field: 'summary.zh', code: 'text-too-long' })
   }
 
   const category = trim(draft.category)
